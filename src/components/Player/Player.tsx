@@ -63,7 +63,6 @@ const Player: React.FC<PlayerProps> = ({ }) => {
 
     // 영상 로드 핸들러
     useEffect(() => {
-        // isLoading이 false이고 영상이 재생 중인 경우에만 실행
         if (!isLoading && isPlaying) {
             playerRef.current?.playVideo();
         }
@@ -74,7 +73,6 @@ const Player: React.FC<PlayerProps> = ({ }) => {
         let updateInterval: NodeJS.Timeout;
 
         if (!isLoading && isPlaying) {
-            // 로딩 중이 아니고 영상이 재생 중인 경우에만 currentTime 업데이트
             updateInterval = setInterval(() => {
                 setCurrentTime((prevTime) => prevTime + 1);
             }, 1000);
@@ -88,17 +86,22 @@ const Player: React.FC<PlayerProps> = ({ }) => {
         if (!existingScript) {
             const script = document.createElement('script');
             script.id = 'youtube-iframe-api';
-            script.src = 'https://www.youtube.com/iframe_api?autoplay=1&enablejsapi=1&origin=http://localhost:3000';
+            script.src = 'https://www.youtube.com/iframe_api?autoplay=1&enablejsapi=1&origin=http://localhost:4040';
             script.async = true;
+
             script.onload = () => {
+                console.log('YouTube IFrame API 스크립트가 로드되었습니다.');
                 window.onYouTubeIframeAPIReady = initializePlayer;
             };
             document.body.appendChild(script);
+
         } else {
+            console.log('YouTube IFrame API 스크립트가 이미 로드되었습니다.');
             initializePlayer();
         }
 
         return () => {
+            console.log("sdfsdfsdf");
             const script = document.getElementById('youtube-iframe-api');
             if (script) {
                 document.body.removeChild(script);
@@ -113,12 +116,13 @@ const Player: React.FC<PlayerProps> = ({ }) => {
             console.log("videoRef.current가 null입니다. 요소가 마운트될 때까지 기다립니다.");
             return;
         };
-    
+
+
         const onPlayerReady = (event: YT.PlayerEvent) => {
             console.log("플레이어가 준비되었습니다.");
             playerRef.current = event.target;
         };
-    
+
         const onPlayerStateChange = (event: YT.OnStateChangeEvent) => {
             const playerState = event.data;
             console.log("플레이어 상태가 변경되었습니다:", playerState);
@@ -153,7 +157,8 @@ const Player: React.FC<PlayerProps> = ({ }) => {
                     break;
             }
         };
-    
+
+
         const onPlayerError = (event: YT.OnErrorEvent) => {
             console.error("플레이어에서 오류가 발생했습니다:", event);
             const errorCode = event.data;
@@ -177,7 +182,7 @@ const Player: React.FC<PlayerProps> = ({ }) => {
             }
             event.target.stopVideo();
         };
-    
+
         playerRef.current = new YT.Player(videoRef.current, {
             events: {
                 'onReady': onPlayerReady,
@@ -185,7 +190,8 @@ const Player: React.FC<PlayerProps> = ({ }) => {
                 'onError': onPlayerError
             }
         });
-        console.log("플레이어 객체가 초기화되었습니다.", playerRef.current);
+        console.log(videoRef.current);
+        console.log(playerRef.current);
     }, [videoRef]);
 
     useEffect(() => {
@@ -196,7 +202,7 @@ const Player: React.FC<PlayerProps> = ({ }) => {
                 console.log("요소가 마운트되지 않았습니다. 기다립니다...");
             }
         };
-        initializePlayerIfMounted(); // 초기 호출
+        initializePlayerIfMounted();
     }, [videoRef.current, initializePlayer]);
 
     useEffect(() => {
@@ -211,6 +217,7 @@ const Player: React.FC<PlayerProps> = ({ }) => {
         }
 
         return () => {
+            console.log("xcvxcvxcv");
             window.onYouTubeIframeAPIReady = undefined;
         };
     }, []);
@@ -448,7 +455,7 @@ const Player: React.FC<PlayerProps> = ({ }) => {
                                 src={`https://www.youtube.com/embed/${playlist[currentVideoIndex].id}?autoplay=1&enablejsapi=0&origin=${encodeURIComponent(window.location.origin)}`}
                                 frameBorder="0"
                                 allowFullScreen
-                                style={{ display: isPlaying ? 'block' : 'none' }}
+                                style={{ display: isPlaying ? 'block' : 'block' }}
                             ></iframe>
                             <img className='thumbnail' src={`https://img.youtube.com/vi/${playlist[currentVideoIndex].id}/default.jpg`} alt="Video Thumbnail" />
                             <div className="info-details">

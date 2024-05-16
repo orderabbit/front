@@ -18,6 +18,8 @@ import { GetSignInUserResponseDto } from 'apis/response/user';
 import { ResponseDto } from 'apis/response';
 import { User } from 'types/interface';
 import Player from 'components/Player/Player';
+import Test from 'components/Player/Test';
+import PP from 'components/Player/asdf';
 
 function App() {
   const {setLoginUser, resetLoginUser} = useLoginUserStore();
@@ -57,6 +59,8 @@ function App() {
           <Route path={UPDATE_PATH(':Number')} element={<Update />} />
         </Route>
         <Route path={MUSIC_PATH()} element={<Player playlist={[]} />} />
+        <Route path='/test' element={<Test/>} />
+        <Route path='/pp' element={<PP/>} />
         <Route path='*' element={<h1>404 Not Found</h1>} />
       </Route>
     </Routes>
