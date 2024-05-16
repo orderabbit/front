@@ -60,14 +60,12 @@ const Player: React.FC<PlayerProps> = ({ }) => {
             setIsLoading(false);
         };
     }, []);
-
     // 영상 로드 핸들러
     useEffect(() => {
         if (!isLoading && isPlaying) {
             playerRef.current?.playVideo();
         }
     }, [isLoading, isPlaying]);
-
     // currentTime 업데이트
     useEffect(() => {
         let updateInterval: NodeJS.Timeout;
@@ -81,48 +79,47 @@ const Player: React.FC<PlayerProps> = ({ }) => {
         return () => clearInterval(updateInterval);
     }, [isLoading, isPlaying]);
 
-    useEffect(() => {
-        const existingScript = document.getElementById('youtube-iframe-api');
-        if (!existingScript) {
-            const script = document.createElement('script');
-            script.id = 'youtube-iframe-api';
-            script.src = 'https://www.youtube.com/iframe_api?autoplay=1&enablejsapi=1&origin=http://localhost:4040';
-            script.async = true;
+    // useEffect(() => {
+    //     const existingScript = document.getElementById('youtube-iframe-api');
+    //     if (!existingScript) {
+    //         const script = document.createElement('script');
+    //         script.id = 'youtube-iframe-api';
+    //         script.src = 'https://www.youtube.com/iframe_api?autoplay=1&enablejsapi=1&origin=http://localhost:4040';
+    //         script.async = true;
 
-            script.onload = () => {
-                console.log('YouTube IFrame API 스크립트가 로드되었습니다.');
-                window.onYouTubeIframeAPIReady = initializePlayer;
-            };
-            document.body.appendChild(script);
+    //         script.onload = () => {
+    //             console.log('YouTube IFrame API 스크립트가 로드되었습니다.');
+    //             window.onYouTubeIframeAPIReady = initializePlayer;
+    //         };
+    //         document.body.appendChild(script);
 
-        } else {
-            console.log('YouTube IFrame API 스크립트가 이미 로드되었습니다.');
-            initializePlayer();
-        }
+    //     } else {
+    //         console.log('YouTube IFrame API 스크립트가 이미 로드되었습니다.');
+    //         initializePlayer();
+    //     }
 
-        return () => {
-            console.log("sdfsdfsdf");
-            const script = document.getElementById('youtube-iframe-api');
-            if (script) {
-                document.body.removeChild(script);
-            }
-            window.onYouTubeIframeAPIReady = undefined;
-        };
-    }, []);
+    //     return () => {
+    //         console.log("sdfsdfsdf");
+    //         const script = document.getElementById('youtube-iframe-api');
+    //         if (script) {
+    //             document.body.removeChild(script);
+    //         }
+    //         window.onYouTubeIframeAPIReady = undefined;
+    //     };
+    // }, []);
+    
 
+    // 플레이어 초기화
     const initializePlayer = useCallback(() => {
         console.log("initializePlayer 함수가 호출되었습니다.");
         if (!videoRef.current) {
             console.log("videoRef.current가 null입니다. 요소가 마운트될 때까지 기다립니다.");
             return;
         };
-
-
         const onPlayerReady = (event: YT.PlayerEvent) => {
             console.log("플레이어가 준비되었습니다.");
             playerRef.current = event.target;
         };
-
         const onPlayerStateChange = (event: YT.OnStateChangeEvent) => {
             const playerState = event.data;
             console.log("플레이어 상태가 변경되었습니다:", playerState);
@@ -157,8 +154,6 @@ const Player: React.FC<PlayerProps> = ({ }) => {
                     break;
             }
         };
-
-
         const onPlayerError = (event: YT.OnErrorEvent) => {
             console.error("플레이어에서 오류가 발생했습니다:", event);
             const errorCode = event.data;
@@ -168,13 +163,6 @@ const Player: React.FC<PlayerProps> = ({ }) => {
                     break;
                 case 5:
                     console.error("HTML5 플레이어에서 영상 관련 문제가 발생했습니다.");
-                    break;
-                case 100:
-                    console.error("영상이 삭제되었거나 비공개로 설정되었습니다.");
-                    break;
-                case 101:
-                case 150:
-                    console.error("영상이 소유자의 요청에 의해 다른 웹사이트에서 재생할 수 없습니다.");
                     break;
                 default:
                     console.error("알 수 없는 오류가 발생했습니다.");
@@ -188,11 +176,31 @@ const Player: React.FC<PlayerProps> = ({ }) => {
                 'onReady': onPlayerReady,
                 'onStateChange': onPlayerStateChange,
                 'onError': onPlayerError
+            },
+            playerVars: {
+                autoplay: 0, // 자동 재생 활성화
+                controls: 1, // 플레이어 컨트롤 표시
             }
         });
-        console.log(videoRef.current);
-        console.log(playerRef.current);
     }, [videoRef]);
+
+    // API 스크립트 로드
+    useEffect(() => {
+        const tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        const firstScriptTag = document.getElementsByTagName('script')[0];
+        if (firstScriptTag?.parentNode) {
+            firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+        }
+
+        window.onYouTubeIframeAPIReady = initializePlayer;
+
+        return () => {
+            if (playerRef.current) {
+                playerRef.current.destroy();
+            }
+        };
+    }, [initializePlayer]);
 
     useEffect(() => {
         const initializePlayerIfMounted = () => {
@@ -217,18 +225,17 @@ const Player: React.FC<PlayerProps> = ({ }) => {
         }
 
         return () => {
-            console.log("xcvxcvxcv");
             window.onYouTubeIframeAPIReady = undefined;
         };
     }, []);
-
+    // 현재 시간 업데이트
     const updateCurrentTime = () => {
         if (playerRef.current) {
             const currentTime = playerRef.current.getCurrentTime();
             setCurrentTime(currentTime);
         }
     };
-
+    // 음악 데이터 가져오기
     const fetchMusicData = async () => {
         try {
             const musicData = await getMusicRequest();
@@ -249,18 +256,18 @@ const Player: React.FC<PlayerProps> = ({ }) => {
             return [];
         }
     };
-
+    // 비디오 정보 가져오기
     useEffect(() => {
         fetchMusicData().then(videos => setPlaylist(videos));
     }, []);
-
+    // 유튜브 비디오 ID 추출
     const extractYouTubeVideoId = (url: string): string | null => {
         const youtubeUrlPattern =
             /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
         const match = url.match(youtubeUrlPattern);
         return match ? match[4] : null;
     };
-
+    // 비디오 정보 가져오기
     const fetchVideoInfo = async (videoId: string | null): Promise<Video | null> => {
         if (!videoId) return null;
         try {
@@ -288,7 +295,7 @@ const Player: React.FC<PlayerProps> = ({ }) => {
             return null;
         }
     };
-
+    // ISO 8601 시간을 초로 변환
     const parseDuration = (iso8601Duration: string): number => {
         const match = iso8601Duration.match(/PT(\d+H)?(\d+M)?(\d+S)?/);
         if (!match) return 0;
@@ -297,7 +304,7 @@ const Player: React.FC<PlayerProps> = ({ }) => {
         const seconds = match[3] ? parseInt(match[3].slice(0, -1)) : 0;
         return hours + minutes + seconds;
     };
-
+    // 이전 비디오 재생
     const playPrevious = () => {
         const previousIndex = currentVideoIndex === 0 ? playlist.length - 1 : currentVideoIndex - 1;
         const previousVideo = playlist[previousIndex];
@@ -311,7 +318,7 @@ const Player: React.FC<PlayerProps> = ({ }) => {
             }
         });
     };
-
+    // 다음 비디오 재생
     const playNext = async () => {
         const nextIndex = (currentVideoIndex + 1) % playlist.length;
         const nextVideo = playlist[nextIndex];
@@ -325,7 +332,7 @@ const Player: React.FC<PlayerProps> = ({ }) => {
             }
         });
     };
-
+    // 재생/일시정지 토글
     const togglePlay = () => {
         console.log("playerRef.current:", playerRef.current);
         if (videoRef.current) {
@@ -347,11 +354,11 @@ const Player: React.FC<PlayerProps> = ({ }) => {
             console.log('videoRef.current가 null입니다. 요소가 마운트될 때까지 기다립니다.');
         }
     };
-
+    // 비디오 URL 변경 핸들러
     const handleVideoUrlChange = (event: ChangeEvent<HTMLInputElement>) => {
         setVideoUrl(event.target.value);
     };
-
+    // 음악 업로드
     const handleMusicUpload = async () => {
         try {
             const requestBody = {
@@ -363,13 +370,13 @@ const Player: React.FC<PlayerProps> = ({ }) => {
             console.error('음악 업로드 실패:', error);
         }
     };
-
+    // 키 다운 핸들러
     const handleKeyDown = (event: { key: string; }) => {
         if (event.key === 'Enter') {
             handleMusicUpload();
         }
     };
-
+    // 슬라이더 변경 핸들러
     const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const time = parseFloat(e.target.value);
         setCurrentTime(time);
@@ -377,44 +384,44 @@ const Player: React.FC<PlayerProps> = ({ }) => {
             playerRef.current.seekTo(time, true);
         }
     };
-
+    // 슬라이더 마우스 업 핸들러
     const handleSliderMouseUp = () => {
         setDragging(false);
     };
-
+    // 슬라이더 마우스 다운 핸들러
     const handleSliderMouseDown = () => {
         setDragging(true);
     };
-
+    // 볼륨 변경 핸들러
     const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const volumeLevel = parseFloat(e.target.value);
         setVolume(volumeLevel);
     };
-
+    // 시간 포맷팅
     const formatTime = (seconds: number): string => {
         const minutes = Math.floor(seconds / 60);
         const remainingSeconds = Math.floor(seconds % 60);
         return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
     };
-
+    // 마우스 다운 핸들러
     const handleMouseDown = (event: { target?: any; clientX?: any; clientY?: any; }) => {
         if (event.target.className !== 'handle') return;
         setDragging(true);
         const { clientX, clientY } = event;
         setOffset({ x: clientX - position.x, y: clientY - position.y });
     };
-
+    // 마우스 이동 핸들러
     const handleMouseMove = (event: { clientX: any; clientY: any; }) => {
         if (dragging) {
             const { clientX, clientY } = event;
             setPosition({ x: clientX - offset.x, y: clientY - offset.y });
         }
     };
-
+    // 마우스 업 핸들러
     const handleMouseUp = () => {
         setDragging(false);
     };
-
+    // 비디오 로드 이벤트
     useEffect(() => {
         const handleIframeLoad = () => {
             console.log('iframe이 로드되었습니다.');
@@ -452,7 +459,7 @@ const Player: React.FC<PlayerProps> = ({ }) => {
                                 ref={videoRef}
                                 width="560"
                                 height="315"
-                                src={`https://www.youtube.com/embed/${playlist[currentVideoIndex].id}?autoplay=1&enablejsapi=0&origin=${encodeURIComponent(window.location.origin)}`}
+                                src={`https://www.youtube.com/embed/${playlist[currentVideoIndex].id}?autoplay0=&mute=0&enablejsapi=0&origin=${encodeURIComponent(window.location.origin)}`}
                                 frameBorder="0"
                                 allowFullScreen
                                 style={{ display: isPlaying ? 'block' : 'block' }}
