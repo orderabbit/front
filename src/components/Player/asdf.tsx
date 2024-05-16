@@ -101,17 +101,17 @@ const Player: React.FC = () => {
         };
 
         playerRef.current = new YT.Player(videoRef.current, {
-            height: '390',
-            width: '640',
-            videoId: 'eP-y5aHlqYo', // YouTube 동영상 ID를 여기에 넣습니다.
+            // height: '390',
+            // width: '640',
+             videoId: 'eP-y5aHlqYo', // YouTube 동영상 ID를 여기에 넣습니다.
             events: {
                 'onReady': onPlayerReady,
                 'onStateChange': onPlayerStateChange,
                 'onError': onPlayerError
             },
             playerVars: {
-                autoplay: 0, // 자동 재생 활성화
-                controls: 1, // 플레이어 컨트롤 표시     // 음소거 상태로 시작
+                autoplay: 0,
+                controls: 1,
             }
         });
     }, [videoRef]);
@@ -127,23 +127,34 @@ const Player: React.FC = () => {
 
         return () => clearInterval(updateInterval);
     }, [isLoading, isPlaying]);
-    // API 스크립트 로드
+    // YouTube IFrame API 스크립트 로드
     useEffect(() => {
-        const tag = document.createElement('script');
-        tag.src = "https://www.youtube.com/iframe_api";
-        const firstScriptTag = document.getElementsByTagName('script')[0];
-        if (firstScriptTag?.parentNode) {
-            firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+        const existingScript = document.getElementById('youtube-iframe-api');
+        if (!existingScript) {
+            const script = document.createElement('script');
+            script.id = 'youtube-iframe-api';
+            script.src = 'https://www.youtube.com/iframe_api?autoplay=1&enablejsapi=1&origin=http://localhost:4040';
+            script.async = true;
+
+            script.onload = () => {
+                console.log('YouTube IFrame API 스크립트가 로드되었습니다.');
+                window.onYouTubeIframeAPIReady = initializePlayer;
+            };
+            document.body.appendChild(script);
+
+        } else {
+            console.log('YouTube IFrame API 스크립트가 이미 로드되었습니다.');
+            initializePlayer();
         }
 
-        window.onYouTubeIframeAPIReady = initializePlayer;
-
         return () => {
-            if (playerRef.current) {
-                playerRef.current.destroy();
+            const script = document.getElementById('youtube-iframe-api');
+            if (script) {
+                document.body.removeChild(script);
             }
+            window.onYouTubeIframeAPIReady = undefined;
         };
-    }, [initializePlayer]);
+    }, []);
     // 음악 데이터 가져오기
     const fetchMusicData = async () => {
         try {
@@ -230,7 +241,6 @@ const Player: React.FC = () => {
     };
     // 재생/일시정지 토글
     const togglePlay = () => {
-        console.log("playerRef.current:", playerRef.current);
         if (videoRef.current) {
             const player = playerRef.current;
             if (player) {
@@ -274,22 +284,23 @@ const Player: React.FC = () => {
             <div className="player-containe">
                 <div ref={videoRef}></div>
                 <div>
-                {/* {duration > 0 && ( */}
-                        <div className="progress-bar">
-                            <input
-                                type="range"
-                                className='progress-slider'
-                                value={currentTime}
-                                max={duration}
-                                onChange={handleSliderChange}
-                                onMouseDown={handleSliderMouseDown}
-                                onMouseUp={handleSliderMouseUp} />
-                            <div className="progress-bar-time">
-                                <p className='time'>{formatTime(currentTime)}</p>
-                                <p className='time'>{formatTime(duration)}</p>
-                            </div>
+
+                    {duration > 0 && (
+                    <div className="progress-bar">
+                        <input
+                            type="range"
+                            className='progress-slider'
+                            value={currentTime}
+                            max={duration}
+                            onChange={handleSliderChange}
+                            onMouseDown={handleSliderMouseDown}
+                            onMouseUp={handleSliderMouseUp} />
+                        <div className="progress-bar-time">
+                            <p className='time'>{formatTime(currentTime)}</p>
+                            <p className='time'>{formatTime(duration)}</p>
                         </div>
-                    {/* )} */}
+                    </div>
+                    )}
                     <div className="controls">
                         <div className='icon-button' onClick={playPrevious}>
                             <div className='icon pre-icon'></div>

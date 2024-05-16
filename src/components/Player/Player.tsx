@@ -107,7 +107,7 @@ const Player: React.FC<PlayerProps> = ({ }) => {
     //         window.onYouTubeIframeAPIReady = undefined;
     //     };
     // }, []);
-    
+
 
     // 플레이어 초기화
     const initializePlayer = useCallback(() => {
