@@ -1,0 +1,139 @@
+#sign-up-wrapper{
+    width: 100vw;
+    min-width: 1440px;
+    height: 90vh;
+
+    display: flex;
+} 
+
+.sign-up-image{
+    width: 830px;
+    background-position: 50% 50%;
+    background-size: 100% 100%;
+    /*background-image: url(views/Authentication/SignUp/assets/sign-up-image.png);*/
+}
+
+.sign-up-container{
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.sign-up-box{
+    width: 380px;
+    
+    display: flex;
+    flex-direction: column;
+
+    gap: 24px;
+}
+
+.sign-up-title{
+    color: rgba(64, 64, 64, 1);
+
+    display: flex;
+    justify-content: center;
+
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 173%;
+}
+
+.sign-up-content-box{
+    display: flex;
+    flex-direction: column;
+
+    align-items: center;
+
+    gap: 24px;
+}
+
+.sign-up-content-sns-sign-in-box{
+    display: flex;
+    flex-direction: column;
+
+    align-items: center;
+
+    gap: 16px;
+}
+
+.sign-up-content-sns-sign-in-title{
+    color: rgba(138, 146, 166, 1);
+
+    font-size: 16px;
+    font-weight: 400;
+    line-height: normal;
+}
+
+.sign-up-content-sns-sign-in-button-box{
+    display: flex;
+    
+    gap: 24px;
+}
+
+.sing-up-content-divider{
+    border-top: 1px solid rgba(238, 238, 238, 1);
+    width: 64px;
+}
+
+.sign-up-content-input-box{
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.sign-up-content-button-box{
+    width: 100%;
+        
+    display: flex;
+    flex-direction: column;
+    
+    gap: 16px;
+}
+
+.sign-up-content-button-box{
+    width: 100%;
+    
+    display: flex;
+    flex-direction: column;
+
+    gap: 16px;
+}
+
+.auth-consent-box {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.auth-check-box {
+    cursor: pointer;
+
+    width: 24px;
+    height: 24px;
+}
+
+.auth-consent-title {
+    color: rgba(0, 0, 0, 0.7);
+
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 140%;
+}
+
+.auth-consent-title-error {
+    color: rgba(255, 0, 0, 0.7);
+
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 140%;
+}
+
+.auth-consent-link {
+    color: rgba(0, 0, 0, 0.7);
+
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 140%;
+}
