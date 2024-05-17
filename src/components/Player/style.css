@@ -1,3 +1,23 @@
+.player-container .progress-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 10px;
+    height: 10px;
+    background-color: black;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.player-container .volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 10px;
+    height: 10px;
+    background-color: black;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
 .player-wrapper {
     display: flex;
     justify-content: center;
@@ -24,7 +44,6 @@
     width: 100px;
     height: 5px;
     background-color: rgba(255, 255, 255, 1);
-    /* border-radius: 50%; */
     position: absolute;
     z-index: 9999;
 }
@@ -56,6 +75,17 @@
     font-weight: 400;
     line-height: 100%;
     margin-bottom: 0px;
+    white-space: nowrap;
+    animation: marquee 10s infinite linear;
+}
+
+@keyframes marquee {
+    from {
+        transform: translateX(100%);
+    }
+    to {
+        transform: translateX(-100%);
+    }
 }
 
 .info-channelTitle {
@@ -94,17 +124,9 @@
 .volume-control {
     width: 100%;
     text-align: center;
-}
-
-.volume-slider {
-    width: calc(100% - 20px);
-    appearance: none;
-    background-color: #007bff;
-    height: 4px;
-    border: none;
-    margin-top: 10px;
-    display: block;
-    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .time-controls {
@@ -130,10 +152,21 @@
     position: relative;
 }
 
-.progress-slider {
-    width: calc(100% - 20px);
+.volume-slider {
+    width: calc(100% - 50%);
     appearance: none;
-    background-color: #007bff;
+    background-color: rgba(0, 0, 0, 0.5);
+    height: 4px;
+    border: none;
+    margin-top: 10px;
+    display: block;
+    position: relative;
+}
+
+.progress-slider {
+    width: calc(100% - 30px);
+    appearance: none;
+    background-color: rgba(0, 0, 0, 0.5);
     height: 4px;
     border: none;
     margin: 0;
@@ -150,6 +183,23 @@
     position: absolute;
     top: -30px;
     /* 슬라이더 위쪽에 위치시킵니다. */
+}
+
+.upload-button-container {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+}
+
+.upload-box-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.5);
 }
 
 .time {

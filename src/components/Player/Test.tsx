@@ -10,19 +10,14 @@ interface Video {
     duration: number;
     contentDetails: any;
 }
-
 interface PlayerProps {
     playlist: Video[];
 }
-
-
-
 declare global {
     interface Window {
         onYouTubeIframeAPIReady?: (() => void);
     }
 }
-
 declare global {
     namespace YT {
         interface OnReadyEvent extends PlayerEvent {
@@ -37,10 +32,11 @@ const Test: React.FC<PlayerProps> = ({ }) => {
     const videoRef = useRef<HTMLIFrameElement | null>(null);
     const playerRef = useRef<YT.Player | null>(null);
 
+    const [muted, setMuted] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [inputVisible, setInputVisible] = useState(false);
     const [dragging, setDragging] = useState(false);
-    const [volume, setVolume] = useState(50);
+    const [volume, setVolume] = useState(100);
     const [duration, setDuration] = useState(0);
     const [currentTime, setCurrentTime] = useState(0);
     const [videoUrl, setVideoUrl] = useState('');
@@ -374,48 +370,31 @@ const Test: React.FC<PlayerProps> = ({ }) => {
             console.log('videoRef.current가 null입니다. 요소가 마운트될 때까지 기다립니다.');
         }
     };
-    // 비디오 URL 변경 핸들러
-    const handleVideoUrlChange = (event: ChangeEvent<HTMLInputElement>) => {
-        setVideoUrl(event.target.value);
+    // 10초 전으로 이동
+    const seekForward = () => {
+        if (!playerRef.current) return;
+        const currentTime = playerRef.current.getCurrentTime();
+        playerRef.current.seekTo(currentTime + 10, true);
     };
-    // 음악 업로드
-    const handleMusicUpload = async () => {
-        try {
-            const requestBody = {
-                videoUrl: videoUrl
-            };
-            const response = await postMusicRequest(requestBody);
-            setVideoUrl('');
-        } catch (error) {
-            console.error('음악 업로드 실패:', error);
-        }
-    };
-    // 키 다운 핸들러
-    const handleKeyDown = (event: { key: string; }) => {
-        if (event.key === 'Enter') {
-            handleMusicUpload();
-        }
-    };
-    // 슬라이더 변경 핸들러
-    const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const time = parseFloat(e.target.value);
-        setCurrentTime(time);
-        if (playerRef.current && typeof playerRef.current.seekTo === 'function') {
-            playerRef.current.seekTo(time, true);
-        }
-    };
-    // 슬라이더 마우스 업 핸들러
-    const handleSliderMouseUp = () => {
-        setDragging(false);
-    };
-    // 슬라이더 마우스 다운 핸들러
-    const handleSliderMouseDown = () => {
-        setDragging(true);
+    // 10초 후로 이동
+    const seekBackward = () => {
+        if (!playerRef.current) return;
+        const currentTime = playerRef.current.getCurrentTime();
+        playerRef.current.seekTo(currentTime - 10, true);
     };
     // 볼륨 변경 핸들러
     const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const volumeLevel = parseFloat(e.target.value);
         setVolume(volumeLevel);
+
+        if (playerRef.current) {
+            playerRef.current.setVolume(volumeLevel * 100); // 0에서 100 사이의 값으로 설정해야 합니다.
+        }
+        console.log('볼륨:', volumeLevel);
+    };
+    // 음소거 토글
+    const toggleMute = () => {
+        setMuted(!muted);
     };
     // 마우스 다운 핸들러
     const handleMouseDown = (event: { target?: any; clientX?: any; clientY?: any; }) => {
@@ -441,7 +420,58 @@ const Test: React.FC<PlayerProps> = ({ }) => {
     const handleMouseUp = () => {
         setDragging(false);
     };
-    
+    // 키 다운 핸들러
+    const handleKeyDown = (event: { key: string; }) => {
+        if (event.key === 'Enter') {
+            handleMusicUpload();
+        }
+    };
+    // 슬라이더 변경 핸들러
+    const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const time = parseFloat(e.target.value);
+        setCurrentTime(time);
+        if (playerRef.current && typeof playerRef.current.seekTo === 'function') {
+            playerRef.current.seekTo(time, true);
+        }
+    };
+    // 슬라이더 마우스 업 핸들러
+    const handleSliderMouseUp = () => {
+        setDragging(false);
+    };
+    // 슬라이더 마우스 다운 핸들러
+    const handleSliderMouseDown = () => {
+        setDragging(true);
+    };
+    // 비디오 URL 변경 핸들러
+    const handleVideoUrlChange = (event: ChangeEvent<HTMLInputElement>) => {
+        setVideoUrl(event.target.value);
+    };
+    // 음악 업로드
+    const handleMusicUpload = async () => {
+        try {
+            const requestBody = {
+                videoUrl: videoUrl
+            };
+            const response = await postMusicRequest(requestBody);
+            setVideoUrl('');
+        } catch (error) {
+            console.error('음악 업로드 실패:', error);
+        }
+    };
+    // 제목 이동
+    const title = document.querySelector('.info-title');
+    if (title) {
+        if (title.scrollWidth > title.clientWidth) {
+            title.classList.add('marquee');
+        } else {
+            title.classList.remove('marquee');
+        }
+    };
+    // 입력 토글
+    const toggleInputVisible = () => {
+        setInputVisible(!inputVisible);
+    };
+
     return (
         <div className="player-wrapper">
             <div className="player-container" style={{ top: containerPosition.y + 'px', left: containerPosition.x + 'px' }}>
@@ -493,6 +523,9 @@ const Test: React.FC<PlayerProps> = ({ }) => {
                     <div className='icon-button' onClick={playPrevious}>
                         <div className='icon pre-icon'></div>
                     </div>
+                    <div className='icon-button' onClick={seekBackward}>
+                        <div className='icon backward-icon'></div>
+                    </div>
                     {videoRef.current && (
                         <div className='icon-button' onClick={togglePlay}>
                             {isPlaying ? (
@@ -502,11 +535,21 @@ const Test: React.FC<PlayerProps> = ({ }) => {
                             )}
                         </div>
                     )}
+                    <div className='icon-button' onClick={seekForward}>
+                        <div className='icon forward-icon'></div>
+                    </div>
                     <div className='icon-button' onClick={playNext}>
                         <div className='icon next-icon'></div>
                     </div>
                 </div>
                 <div className="volume-control">
+                    <div className='icon-button' onClick={toggleMute}>
+                        {muted ? (
+                            <div className='icon mute-icon'></div>
+                        ) : (
+                            <div className='icon unmute-icon'></div>
+                        )}
+                    </div>
                     <input
                         type="range"
                         className="volume-slider"
@@ -515,20 +558,26 @@ const Test: React.FC<PlayerProps> = ({ }) => {
                         max={100}
                         onChange={handleVolumeChange} />
                 </div>
-                {!inputVisible && (
-                    <button className="upload-button" onClick={() => setInputVisible(true)}>업로드</button>
-                )}
-                {inputVisible && (
-                    <div>
-                        <input
-                            type="text"
-                            value={videoUrl}
-                            onChange={handleVideoUrlChange}
-                            onKeyDown={handleKeyDown}
-                            placeholder="URL 입력" />
-                        <button className="upload-button" onClick={handleMusicUpload}>업로드</button>
-                    </div>
-                )}
+                <div className='upload-button-container'>
+                    {!inputVisible && (
+                        <div className='icon-button' onClick={toggleInputVisible}>
+                            <div className='icon upload-icon'></div>
+                        </div>
+                    )}
+                </div>
+                <div style={{ position: 'absolute', bottom: '0', left: '0' }}>
+                    {inputVisible && (
+                        <div>
+                            <input
+                                type="text"
+                                value={videoUrl}
+                                onChange={handleVideoUrlChange}
+                                onKeyDown={handleKeyDown}
+                                placeholder="URL 입력" />
+                            <button className="upload-button" onClick={handleMusicUpload}>업로드</button>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );
