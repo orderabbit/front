@@ -51,6 +51,23 @@ const Test: React.FC<PlayerProps> = ({ }) => {
     const [mousedownX, setMousedownX] = useState(0);
     const [mousedownY, setMousedownY] = useState(0);
 
+    // 비디오 로드 이벤트
+    useEffect(() => {
+        const handleIframeLoad = () => {
+            console.log('iframe이 로드되었습니다.');
+            initializePlayer();
+        };
+
+        if (videoRef.current) {
+            videoRef.current.onload = handleIframeLoad;
+        }
+
+        return () => {
+            if (videoRef.current) {
+                videoRef.current.onload = null;
+            }
+        };
+    }, [videoRef.current]);
     // 영상 로딩 핸들러
     useEffect(() => {
         setIsLoading(true);
@@ -108,7 +125,6 @@ const Test: React.FC<PlayerProps> = ({ }) => {
                     console.log("플레이어 상태: PLAYING");
                     setIsPlaying(true);
                     updateCurrentTime();
-                    // console.log('Current Time:', currentTime);
                     break;
                 case YT.PlayerState.PAUSED:
                     console.log("플레이어 상태: PAUSED");
@@ -156,7 +172,9 @@ const Test: React.FC<PlayerProps> = ({ }) => {
                 controls: 0,
             }
         });
-    }, [videoRef, playlist, currentVideoIndex]);
+        console.log('currentVideoIndex:', playlist[currentVideoIndex].id);
+        console.log("플레이어가 초기화되었습니다.");
+    }, [videoRef, playlist]);
 
     useEffect(() => {
         if (playerRef.current && playerRef.current.loadVideoById) {
@@ -191,7 +209,7 @@ const Test: React.FC<PlayerProps> = ({ }) => {
             }
             window.onYouTubeIframeAPIReady = undefined;
         };
-    }, [initializePlayer]);
+    }, []);
 
     useEffect(() => {
         const initializePlayerIfMounted = () => {
@@ -297,14 +315,19 @@ const Test: React.FC<PlayerProps> = ({ }) => {
         const previousIndex = currentVideoIndex === 0 ? playlist.length - 1 : currentVideoIndex - 1;
         const previousVideo = playlist[previousIndex];
         const videoId = previousVideo.id;
-        fetchVideoInfo(videoId).then(videoInfo => {
-            if (videoInfo) {
-                setCurrentVideoIndex(previousIndex);
-                setDuration(videoInfo.duration);
-                setCurrentTime(0);
-                setIsPlaying(true);
-                playerRef.current?.loadVideoById(videoId);
-                playerRef.current?.playVideo();
+
+        fetchVideoInfo(videoId).then(async videoInfo => {
+            try {
+                if (videoInfo && videoRef.current && playerRef.current) {
+                    setCurrentVideoIndex(previousIndex);
+                    setDuration(videoInfo.duration);
+                    setCurrentTime(0);
+                    setIsPlaying(true);
+                } else {
+                    console.error('Player is not initialized or loadVideoById function is not available.');
+                }
+            } catch (error) {
+                console.error('Error fetching next video info:', error);
             }
         });
     };
@@ -314,13 +337,16 @@ const Test: React.FC<PlayerProps> = ({ }) => {
         const nextVideo = playlist[nextIndex];
         const videoId = nextVideo.id;
         console.log('다음 비디오 ID:', videoId);
+
         try {
             const videoInfo = await fetchVideoInfo(videoId);
-            if (videoInfo) {
+            if (videoInfo && videoRef.current && playerRef.current) {
                 setCurrentVideoIndex(nextIndex);
                 setDuration(videoInfo.duration);
                 setCurrentTime(0);
                 setIsPlaying(true);
+            } else {
+                console.error('Player is not initialized or loadVideoById function is not available.');
             }
         } catch (error) {
             console.error('Error fetching next video info:', error);
@@ -415,24 +441,7 @@ const Test: React.FC<PlayerProps> = ({ }) => {
     const handleMouseUp = () => {
         setDragging(false);
     };
-    // 비디오 로드 이벤트
-    useEffect(() => {
-        const handleIframeLoad = () => {
-            console.log('iframe이 로드되었습니다.');
-            initializePlayer();
-        };
-
-        if (videoRef.current) {
-            videoRef.current.onload = handleIframeLoad;
-        }
-
-        return () => {
-            if (videoRef.current) {
-                videoRef.current.onload = null;
-            }
-        };
-    }, [videoRef.current]);
-
+    
     return (
         <div className="player-wrapper">
             <div className="player-container" style={{ top: containerPosition.y + 'px', left: containerPosition.x + 'px' }}>
