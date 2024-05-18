@@ -48,7 +48,7 @@ const GET_POPULAR_LIST_URL = () => `${API_DOMAIN}/search/popular-list`;
 
 const PATCH_NICKNAME_URL = () => `${API_DOMAIN}/user/nickname`;
 const PATCH_PROFILE_IMAGE_URL = () => `${API_DOMAIN}/user/profile-image`;
-const DELETE_MUSIC_URL = (index: number | string) => `${API_DOMAIN}/music/${index}`;
+const DELETE_MUSIC_URL = (url: string) => `${API_DOMAIN}/music/delete/${url}`;
 const GET_USER_URL = (userId: string) => `${API_DOMAIN}/user/${userId}`
 const GET_USER_BOARD_LIST_URL = (userId: string) => `${API_DOMAIN}/board/user-board-list/${userId}`;
 const PATCH_BOARD_URL = (itemNumber: number | string) => `${API_DOMAIN}/board/${itemNumber}`;
@@ -66,8 +66,8 @@ const FILE_DOMAIN = `${DOMAIN}/file`;
 const FILE_UPLOAD_URL = () => `${FILE_DOMAIN}/upload`;
 const multipartFormData = { headers: { 'Url-Type': 'multipart/form-data' } };
 
-export const deleteMusicRequest = async (itemNumber: number | string) => {
-    const result = await axios.delete(DELETE_MUSIC_URL(itemNumber))
+export const deleteMusicRequest = async (url: string) => {
+    const result = await axios.delete(DELETE_MUSIC_URL(url))
         .then(response => {
             const responseBody: DeleteMusicResponseDto = response.data;
             return responseBody;

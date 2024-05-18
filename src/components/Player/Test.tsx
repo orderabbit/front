@@ -7,6 +7,7 @@ interface Video {
     id: string;
     title: string;
     channelTitle: string;
+    videoUrl: string;
     duration: number;
     contentDetails: any;
 }
@@ -32,6 +33,7 @@ const Test: React.FC<PlayerProps> = ({ }) => {
     const videoRef = useRef<HTMLIFrameElement | null>(null);
     const playerRef = useRef<YT.Player | null>(null);
 
+    const [isRepeatEnabled, setIsRepeatEnabled] = useState(false);
     const [muted, setMuted] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [inputVisible, setInputVisible] = useState(false);
@@ -107,7 +109,9 @@ const Test: React.FC<PlayerProps> = ({ }) => {
             playerRef.current = event.target;
         };
         const onPlayerStateChange = (event: YT.OnStateChangeEvent) => {
+
             const playerState = event.data;
+
             console.log("플레이어 상태가 변경되었습니다:", playerState);
             switch (playerState) {
                 case YT.PlayerState.UNSTARTED:
@@ -138,6 +142,7 @@ const Test: React.FC<PlayerProps> = ({ }) => {
                     break;
             }
         };
+
         const onPlayerError = (event: YT.OnErrorEvent) => {
             console.error("플레이어에서 오류가 발생했습니다:", event);
             const errorCode = event.data;
@@ -292,6 +297,7 @@ const Test: React.FC<PlayerProps> = ({ }) => {
                     id: videoId,
                     title: snippet.title,
                     channelTitle: snippet.channelTitle,
+                    videoUrl: `https://www.youtube.com/watch?v=${videoId}`,
                     duration: durationInSeconds,
                     contentDetails: contentDetails
                 };
@@ -382,6 +388,10 @@ const Test: React.FC<PlayerProps> = ({ }) => {
         const currentTime = playerRef.current.getCurrentTime();
         playerRef.current.seekTo(currentTime - 10, true);
     };
+    const toggleRepeat = () => {
+        setIsRepeatEnabled(!isRepeatEnabled);
+    }
+
     // 볼륨 변경 핸들러
     const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newVolume = parseInt(e.target.value, 10);
@@ -489,7 +499,8 @@ const Test: React.FC<PlayerProps> = ({ }) => {
     // 노래 삭제 핸들러
     const handleDelete = async (index: number) => {
         try {
-            const deleteResult = await deleteMusicRequest(playlist[index].id);
+            const videoUrl = playlist[index].videoUrl;
+            const deleteResult = await deleteMusicRequest(videoUrl);
             if (deleteResult) {
                 const newPlaylist = playlist.filter((_, i) => i !== index);
                 setPlaylist(newPlaylist);
@@ -502,6 +513,12 @@ const Test: React.FC<PlayerProps> = ({ }) => {
             }
         } catch (error) {
             console.error('음악 삭제 요청 실패:', error);
+        }
+    };
+
+    const changePlaybackRate = (rate: number) => {
+        if (playerRef.current) {
+            playerRef.current.setPlaybackRate(rate);
         }
     };
 
@@ -552,11 +569,11 @@ const Test: React.FC<PlayerProps> = ({ }) => {
                         </div>
                     )}
                     <div className="controls">
-                        <div className='icon-button' onClick={playPrevious}>
-                            <div className='icon pre-icon'></div>
-                        </div>
                         <div className='icon-button' onClick={seekBackward}>
                             <div className='icon backward-icon'></div>
+                        </div>
+                        <div className='icon-button' onClick={playPrevious}>
+                            <div className='icon pre-icon'></div>
                         </div>
                         {videoRef.current && (
                             <div className='icon-button' onClick={togglePlay}>
@@ -567,11 +584,11 @@ const Test: React.FC<PlayerProps> = ({ }) => {
                                 )}
                             </div>
                         )}
-                        <div className='icon-button' onClick={seekForward}>
-                            <div className='icon forward-icon'></div>
-                        </div>
                         <div className='icon-button' onClick={playNext}>
                             <div className='icon next-icon'></div>
+                        </div>
+                        <div className='icon-button' onClick={seekForward}>
+                            <div className='icon forward-icon'></div>
                         </div>
                     </div>
                     <div className="volume-control">

@@ -378,7 +378,7 @@
 }
 
 .delete-icon {
-  background-image: url(assets/images/playlist_remove.png);
+  background-image: url(assets/images/delete.png);
 }
 
 .replay-icon {
@@ -387,4 +387,12 @@
 
 .list-icon {
   background-image: url(assets/images/list_music.png);
+}
+
+.repeat-on-icon {
+  background-image: url(assets/images/repeat_on.png);
+}
+
+.repeat-off-icon {
+  background-image: url(assets/images/repeat_off.png);
 }
