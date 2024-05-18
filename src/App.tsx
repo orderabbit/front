@@ -59,9 +59,7 @@ function App() {
           <Route path={UPDATE_PATH(':Number')} element={<Update />} />
         </Route>
         <Route path={MUSIC_PATH()} element={<Player playlist={[]} />} />
-        
         <Route path='/pp' element={<PP playlist={[]}/>} />
-        <Route path='/test' element={<Test playlist={[]}/>} />
         <Route path='*' element={<h1>404 Not Found</h1>} />
       </Route>
     </Routes>

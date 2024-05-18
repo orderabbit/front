@@ -151,7 +151,7 @@ export default function Write() {
               </div>
               <input ref={imageInputRef} type='file' accept='image/*' style={{display: 'none'}} onChange={onImageChangeHandler}/>
               <div className='icon-button' onClick={toggleUrlBox}>
-                <div className='icon image-box-light-icon'></div>
+                <div className='icon url-box-light-icon'></div>
               </div>
               {showMore &&
               <input ref={videoUrlInputRef} type='text' className='url-input' placeholder='URL을 입력하세요.' value={videoUrl} onChange={onVideoUrlChangeHandler} onKeyPress={handleKeyPress}/>

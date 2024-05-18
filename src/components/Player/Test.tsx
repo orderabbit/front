@@ -1,6 +1,6 @@
-import React, { useState, useEffect, ChangeEvent, useRef, useCallback } from 'react';
+import React, { useState, useEffect, ChangeEvent, useRef, useCallback, useLayoutEffect } from 'react';
 import axios from 'axios';
-import { getMusicRequest, postMusicRequest } from 'apis';
+import { deleteMusicRequest, getMusicRequest, postMusicRequest } from 'apis';
 import './style.css';
 
 interface Video {
@@ -35,6 +35,7 @@ const Test: React.FC<PlayerProps> = ({ }) => {
     const [muted, setMuted] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [inputVisible, setInputVisible] = useState(false);
+    const [listVisible, setListVisible] = useState(false);
     const [dragging, setDragging] = useState(false);
     const [volume, setVolume] = useState(100);
     const [duration, setDuration] = useState(0);
@@ -115,7 +116,6 @@ const Test: React.FC<PlayerProps> = ({ }) => {
                 case YT.PlayerState.ENDED:
                     console.log("플레이어 상태: ENDED");
                     playNext();
-                    setCurrentTime(0);
                     break;
                 case YT.PlayerState.PLAYING:
                     console.log("플레이어 상태: PLAYING");
@@ -155,8 +155,8 @@ const Test: React.FC<PlayerProps> = ({ }) => {
             event.target.stopVideo();
         };
         playerRef.current = new YT.Player(videoRef.current, {
-            height: '222',
-            width: '222',
+            height: '0',
+            width: '0',
             videoId: playlist[currentVideoIndex].id,
             events: {
                 'onReady': onPlayerReady,
@@ -168,7 +168,6 @@ const Test: React.FC<PlayerProps> = ({ }) => {
                 controls: 0,
             }
         });
-        console.log('currentVideoIndex:', playlist[currentVideoIndex].id);
         console.log("플레이어가 초기화되었습니다.");
     }, [videoRef, playlist]);
 
@@ -236,7 +235,6 @@ const Test: React.FC<PlayerProps> = ({ }) => {
     // 현재 시간 업데이트
     const updateCurrentTime = () => {
         if (playerRef.current && typeof playerRef.current.getCurrentTime === 'function') {
-            console.log(playerRef.current.getCurrentTime());
             const currentTime = playerRef.current.getCurrentTime();
             setCurrentTime(currentTime);
         }
@@ -329,10 +327,11 @@ const Test: React.FC<PlayerProps> = ({ }) => {
     };
     // 다음 비디오 재생
     const playNext = async () => {
+        console.log('currentVideoIndex:', currentVideoIndex);
         const nextIndex = (currentVideoIndex + 1) % playlist.length;
         const nextVideo = playlist[nextIndex];
         const videoId = nextVideo.id;
-        console.log('다음 비디오 ID:', videoId);
+        console.log('nextIndex:', nextIndex);
 
         try {
             const videoInfo = await fetchVideoInfo(videoId);
@@ -341,6 +340,7 @@ const Test: React.FC<PlayerProps> = ({ }) => {
                 setDuration(videoInfo.duration);
                 setCurrentTime(0);
                 setIsPlaying(true);
+                playerRef.current.loadVideoById(videoId);
             } else {
                 console.error('Player is not initialized or loadVideoById function is not available.');
             }
@@ -384,17 +384,23 @@ const Test: React.FC<PlayerProps> = ({ }) => {
     };
     // 볼륨 변경 핸들러
     const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const volumeLevel = parseFloat(e.target.value);
-        setVolume(volumeLevel);
-
-        if (playerRef.current) {
-            playerRef.current.setVolume(volumeLevel * 100); // 0에서 100 사이의 값으로 설정해야 합니다.
+        const newVolume = parseInt(e.target.value, 10);
+        setVolume(newVolume);
+        if (playerRef.current && typeof playerRef.current.setVolume === 'function') {
+            playerRef.current.setVolume(newVolume);
         }
-        console.log('볼륨:', volumeLevel);
     };
     // 음소거 토글
     const toggleMute = () => {
-        setMuted(!muted);
+        if (playerRef.current && typeof playerRef.current.isMuted === 'function') {
+            if (playerRef.current.isMuted()) {
+                playerRef.current.unMute();
+                setMuted(false);
+            } else {
+                playerRef.current.mute();
+                setMuted(true);
+            }
+        }
     };
     // 마우스 다운 핸들러
     const handleMouseDown = (event: { target?: any; clientX?: any; clientY?: any; }) => {
@@ -449,36 +455,61 @@ const Test: React.FC<PlayerProps> = ({ }) => {
     // 음악 업로드
     const handleMusicUpload = async () => {
         try {
-            const requestBody = {
-                videoUrl: videoUrl
-            };
+            const requestBody = { videoUrl: videoUrl };
             const response = await postMusicRequest(requestBody);
             setVideoUrl('');
+            alert('음악 업로드 성공:')
         } catch (error) {
             console.error('음악 업로드 실패:', error);
         }
     };
-    // 제목 이동
-    const title = document.querySelector('.info-title');
-    if (title) {
-        if (title.scrollWidth > title.clientWidth) {
-            title.classList.add('marquee');
-        } else {
-            title.classList.remove('marquee');
-        }
-    };
-    // 입력 토글
-    const toggleInputVisible = () => {
+    // 업로드 토글
+    const uploadToggleInputVisible = () => {
         setInputVisible(!inputVisible);
+    };
+    // 리스트 토글
+    const listToggleInputVisible = () => {
+        setListVisible(!listVisible);
+    };
+    // Video 제목 클릭 핸들러
+    const handleVideoTitleClick = (index: number) => {
+        setCurrentVideoIndex(index);
+        setIsPlaying(true);
+        fetchVideoInfo(playlist[index].id)
+            .then(videoInfo => {
+                if (videoInfo) {
+                    setDuration(videoInfo.duration);
+                    setCurrentTime(0);
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching video info:', error);
+            });
+    };
+    // 노래 삭제 핸들러
+    const handleDelete = async (index: number) => {
+        try {
+            const deleteResult = await deleteMusicRequest(playlist[index].id);
+            if (deleteResult) {
+                const newPlaylist = playlist.filter((_, i) => i !== index);
+                setPlaylist(newPlaylist);
+                if (currentVideoIndex >= newPlaylist.length) {
+                    setCurrentVideoIndex(0);
+                    setIsPlaying(true);
+                }
+            } else {
+                console.error('음악 삭제 요청 실패');
+            }
+        } catch (error) {
+            console.error('음악 삭제 요청 실패:', error);
+        }
     };
 
     return (
-        <div className="player-wrapper">
-            <div className="player-container" style={{ top: containerPosition.y + 'px', left: containerPosition.x + 'px' }}>
+        <div className='player'>
+            <div className="player-wrapper" style={{ top: containerPosition.y + 'px', left: containerPosition.x + 'px' }}>
                 <div className="handle"
                     style={{
-                        top: '0',
-                        left: '50%',
                         transform: 'translateX(-50%)',
                         cursor: 'grab',
                         backgroundColor: 'transparent',
@@ -486,97 +517,120 @@ const Test: React.FC<PlayerProps> = ({ }) => {
                     onMouseDown={handleMouseDown}
                     onMouseMove={handleMouseMove}
                     onMouseUp={handleMouseUp} />
-                {playlist[currentVideoIndex] && (
-                    <div className="video-info">
-                        <div ref={videoRef}>
-                            <iframe
-                                src={`https://www.youtube.com/embed/${playlist[currentVideoIndex].id}?enablejsapi=0&origin=${encodeURIComponent(window.location.origin)}`}
-                                frameBorder="0"
-                                allowFullScreen
-                                style={{ display: isPlaying ? 'none' : 'none' }}
-                            ></iframe>
+                <div className="player-container">
+                    {playlist[currentVideoIndex] && (
+                        <div className="video-info">
+                            <div ref={videoRef}>
+                                <iframe
+                                    src={`https://www.youtube.com/embed/${playlist[currentVideoIndex].id}?enablejsapi=0&origin=${encodeURIComponent(window.location.origin)}`}
+                                    frameBorder="0"
+                                    allowFullScreen
+                                    style={{ display: isPlaying ? 'none' : 'none' }}
+                                ></iframe>
+                            </div>
+                            <img className='thumbnail' src={`https://img.youtube.com/vi/${playlist[currentVideoIndex].id}/default.jpg`} alt="Video Thumbnail" />
+                            <div className="info-details">
+                                <div className='info-title'>{playlist[currentVideoIndex].title}</div>
+                                <p className='info-channelTitle'>{`artist: ${playlist[currentVideoIndex].channelTitle}`}</p>
+                            </div>
                         </div>
-                        <img className='thumbnail' src={`https://img.youtube.com/vi/${playlist[currentVideoIndex].id}/default.jpg`} alt="Video Thumbnail" />
-                        <div className="info-details">
-                            <h3 className='info-title'>{playlist[currentVideoIndex].title}</h3>
-                            <p className='info-channelTitle'>{`artist: ${playlist[currentVideoIndex].channelTitle}`}</p>
+                    )}
+                    {duration > 0 && (
+                        <div className="progress-bar">
+                            <input
+                                type="range"
+                                className='progress-slider'
+                                value={currentTime}
+                                max={duration}
+                                onChange={handleSliderChange}
+                                onMouseDown={handleSliderMouseDown}
+                                onMouseUp={handleSliderMouseUp} />
+                            <div className="progress-bar-time">
+                                <p className='time'>{formatTime(currentTime)}</p>
+                                <p className='time'>{formatTime(duration)}</p>
+                            </div>
+                        </div>
+                    )}
+                    <div className="controls">
+                        <div className='icon-button' onClick={playPrevious}>
+                            <div className='icon pre-icon'></div>
+                        </div>
+                        <div className='icon-button' onClick={seekBackward}>
+                            <div className='icon backward-icon'></div>
+                        </div>
+                        {videoRef.current && (
+                            <div className='icon-button' onClick={togglePlay}>
+                                {isPlaying ? (
+                                    <div className='icon pause-icon'></div>
+                                ) : (
+                                    <div className='icon play-icon'></div>
+                                )}
+                            </div>
+                        )}
+                        <div className='icon-button' onClick={seekForward}>
+                            <div className='icon forward-icon'></div>
+                        </div>
+                        <div className='icon-button' onClick={playNext}>
+                            <div className='icon next-icon'></div>
                         </div>
                     </div>
-                )}
-                {duration > 0 && (
-                    <div className="progress-bar">
-                        <input
-                            type="range"
-                            className='progress-slider'
-                            value={currentTime}
-                            max={duration}
-                            onChange={handleSliderChange}
-                            onMouseDown={handleSliderMouseDown}
-                            onMouseUp={handleSliderMouseUp} />
-                        <div className="progress-bar-time">
-                            <p className='time'>{formatTime(currentTime)}</p>
-                            <p className='time'>{formatTime(duration)}</p>
-                        </div>
-                    </div>
-                )}
-                <div className="controls">
-                    <div className='icon-button' onClick={playPrevious}>
-                        <div className='icon pre-icon'></div>
-                    </div>
-                    <div className='icon-button' onClick={seekBackward}>
-                        <div className='icon backward-icon'></div>
-                    </div>
-                    {videoRef.current && (
-                        <div className='icon-button' onClick={togglePlay}>
-                            {isPlaying ? (
-                                <div className='icon pause-icon'></div>
+                    <div className="volume-control">
+                        <div className='icon-button' onClick={toggleMute}>
+                            {muted ? (
+                                <div className='icon mute-icon'></div>
                             ) : (
-                                <div className='icon play-icon'></div>
+                                <div className='icon unmute-icon'></div>
                             )}
                         </div>
-                    )}
-                    <div className='icon-button' onClick={seekForward}>
-                        <div className='icon forward-icon'></div>
+                        <input
+                            type="range"
+                            className="volume-slider"
+                            value={volume}
+                            min={0}
+                            max={100}
+                            onChange={handleVolumeChange} />
                     </div>
-                    <div className='icon-button' onClick={playNext}>
-                        <div className='icon next-icon'></div>
+                    <div className='list-button-container'>
+                        <div className='icon-button' onClick={listToggleInputVisible}>
+                            <div className='icon list-icon'></div>
+                        </div>
                     </div>
-                </div>
-                <div className="volume-control">
-                    <div className='icon-button' onClick={toggleMute}>
-                        {muted ? (
-                            <div className='icon mute-icon'></div>
-                        ) : (
-                            <div className='icon unmute-icon'></div>
-                        )}
-                    </div>
-                    <input
-                        type="range"
-                        className="volume-slider"
-                        value={volume}
-                        min={0}
-                        max={100}
-                        onChange={handleVolumeChange} />
-                </div>
-                <div className='upload-button-container'>
-                    {!inputVisible && (
-                        <div className='icon-button' onClick={toggleInputVisible}>
+                    <div className='upload-button-container'>
+                        <div className='icon-button' onClick={uploadToggleInputVisible}>
                             <div className='icon upload-icon'></div>
                         </div>
-                    )}
+                    </div>
                 </div>
-                <div style={{ position: 'absolute', bottom: '0', left: '0' }}>
-                    {inputVisible && (
-                        <div>
-                            <input
-                                type="text"
-                                value={videoUrl}
-                                onChange={handleVideoUrlChange}
-                                onKeyDown={handleKeyDown}
-                                placeholder="URL 입력" />
-                            <button className="upload-button" onClick={handleMusicUpload}>업로드</button>
+                <div className="url-input-container">
+                    <div className="upload-box-container">
+                        <div style={{ position: 'absolute', bottom: '0', left: '0' }}>
+                            {inputVisible && (
+                                <div>
+                                    <input
+                                        type="text"
+                                        value={videoUrl}
+                                        onChange={handleVideoUrlChange}
+                                        onKeyDown={handleKeyDown}
+                                        placeholder="URL 입력" />
+                                    <div className="upload-button" onClick={handleMusicUpload}></div>
+                                </div>
+                            )}
                         </div>
-                    )}
+                    </div>
+                </div>
+                <div className='video-title-list' style={{ display: listVisible ? 'block' : 'none' }}>
+                    <ul>
+                        {playlist.map((video, index) => (
+                            <li key={index}>
+                                <div className='delete-button-container'>
+                                    <div className='icon-button' onClick={() => handleDelete(index)}>
+                                        <div className='icon delete-icon'></div>
+                                    </div>
+                                </div>
+                                <span onClick={() => handleVideoTitleClick(index)}>{video.title}</span>
+                            </li>
+                        ))}
+                    </ul>
                 </div>
             </div>
         </div>

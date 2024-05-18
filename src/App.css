@@ -337,22 +337,54 @@
   background-image: url(assets/images/arrow-right.png);
 }
 
-.url-box-light {
-  background-image: url(assets/images/url-box-light.jpg);
+.url-box-light-icon {
+  background-image: url(assets/images/link.png);
 }
 
 .pre-icon {
-  background-image: url(assets/images/pre.png);
+  background-image: url(assets/images/skip_previous.png);
 }
 
 .play-icon {
-  background-image: url(assets/images/play.png);
+  background-image: url(assets/images/play_arrow.png);
 }
 
 .pause-icon {
-  background-image: url(assets/images/stop.png);
+  background-image: url(assets/images/pause.png);
 }
 
 .next-icon {
-  background-image: url(assets/images/next.png);
+  background-image: url(assets/images/skip_next.png);
+}
+
+.forward-icon {
+  background-image: url(assets/images/forward_10.png);
+}
+
+.backward-icon {
+  background-image: url(assets/images/backward_10.png);
+}
+
+.mute-icon {
+  background-image: url(assets/images/mute.png);
+}
+
+.unmute-icon {
+  background-image: url(assets/images/unmute.png);
+}
+
+.upload-icon {
+  background-image: url(assets/images/playlist_add.png);
+}
+
+.delete-icon {
+  background-image: url(assets/images/playlist_remove.png);
+}
+
+.replay-icon {
+  background-image: url(assets/images/replay.png);
+}
+
+.list-icon {
+  background-image: url(assets/images/list_music.png);
 }
