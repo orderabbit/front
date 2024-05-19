@@ -20,7 +20,6 @@ export default function Top3Item({ top3ListItem }: Props) {
     const onClickHandler = () => {
         navigator(BOARD_PATH() + '/' + DETAIL_PATH(itemNumber));
     }
-console.log(commentCount)
     return (
         <div className='top-3-list-item' style={{ backgroundImage: `url(${boardTitleImage})` }} onClick={onClickHandler}>
             <div className='top-3-list-item-main-box'>

@@ -33,7 +33,7 @@ const Test: React.FC<PlayerProps> = ({ }) => {
     const videoRef = useRef<HTMLIFrameElement | null>(null);
     const playerRef = useRef<YT.Player | null>(null);
 
-    const [isRepeatEnabled, setIsRepeatEnabled] = useState(false);
+    const [isRepeatEnabled, setIsRepeatEnabled] = useState(true);
     const [muted, setMuted] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [inputVisible, setInputVisible] = useState(false);
@@ -109,16 +109,18 @@ const Test: React.FC<PlayerProps> = ({ }) => {
             playerRef.current = event.target;
         };
         const onPlayerStateChange = (event: YT.OnStateChangeEvent) => {
-
             const playerState = event.data;
-
             console.log("플레이어 상태가 변경되었습니다:", playerState);
+            // if (event.data === YT.PlayerState.ENDED && isRepeatEnabled) {
+            //     console.log("반복 재생이 활성화되었습니다. 다음 비디오를 재생합니다.");
+            //     playerRef.current?.playVideo();
+            // }
             switch (playerState) {
-                case YT.PlayerState.UNSTARTED:
-                    console.log("플레이어 상태: UNSTARTED");
-                    break;
                 case YT.PlayerState.ENDED:
                     console.log("플레이어 상태: ENDED");
+                    const nextIndex = currentVideoIndex + 1;
+                    setCurrentVideoIndex(nextIndex);
+                    console.log('currentVideoIndex:====', nextIndex);
                     playNext();
                     break;
                 case YT.PlayerState.PLAYING:
@@ -130,19 +132,9 @@ const Test: React.FC<PlayerProps> = ({ }) => {
                     console.log("플레이어 상태: PAUSED");
                     setIsPlaying(false);
                     break;
-                case YT.PlayerState.BUFFERING:
-                    console.log("플레이어 상태: BUFFERING");
-                    break;
-                case YT.PlayerState.CUED:
-                    console.log("플레이어 상태: CUED");
-                    setIsPlaying(false);
-                    break;
-                default:
-                    console.log("플레이어 상태: UNKNOWN");
-                    break;
+
             }
         };
-
         const onPlayerError = (event: YT.OnErrorEvent) => {
             console.error("플레이어에서 오류가 발생했습니다:", event);
             const errorCode = event.data;
@@ -332,7 +324,7 @@ const Test: React.FC<PlayerProps> = ({ }) => {
         });
     };
     // 다음 비디오 재생
-    const playNext = async () => {
+    const playNext = useCallback(async () => {
         console.log('currentVideoIndex:', currentVideoIndex);
         const nextIndex = (currentVideoIndex + 1) % playlist.length;
         const nextVideo = playlist[nextIndex];
@@ -353,7 +345,7 @@ const Test: React.FC<PlayerProps> = ({ }) => {
         } catch (error) {
             console.error('Error fetching next video info:', error);
         }
-    };
+    }, [currentVideoIndex, playlist]);
     // 재생/일시정지 토글
     const togglePlay = () => {
         if (videoRef.current) {
@@ -388,10 +380,10 @@ const Test: React.FC<PlayerProps> = ({ }) => {
         const currentTime = playerRef.current.getCurrentTime();
         playerRef.current.seekTo(currentTime - 10, true);
     };
+    // 반복 재생 토글
     const toggleRepeat = () => {
-        setIsRepeatEnabled(!isRepeatEnabled);
+        setIsRepeatEnabled(prevState => !prevState);
     }
-
     // 볼륨 변경 핸들러
     const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newVolume = parseInt(e.target.value, 10);
@@ -606,6 +598,13 @@ const Test: React.FC<PlayerProps> = ({ }) => {
                             min={0}
                             max={100}
                             onChange={handleVolumeChange} />
+                        <div className="icon-button" onClick={toggleRepeat}>
+                            {isRepeatEnabled ? (
+                                <div className="icon repeat-on-icon"></div>
+                            ) : (
+                                <div className="icon repeat-off-icon"></div>
+                            )}
+                        </div>
                     </div>
                     <div className='list-button-container'>
                         <div className='icon-button' onClick={listToggleInputVisible}>
@@ -640,7 +639,7 @@ const Test: React.FC<PlayerProps> = ({ }) => {
                         {playlist.map((video, index) => (
                             <li key={index}>
                                 <div className='delete-button-container'>
-                                    <div className='icon-button' onClick={() => handleDelete(index)}>
+                                    <div className='icon-buttons' onClick={() => handleDelete(index)}>
                                         <div className='icon delete-icon'></div>
                                     </div>
                                 </div>

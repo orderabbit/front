@@ -316,7 +316,7 @@
   text-overflow: ellipsis;
   max-width: 200px; /* 적절한 최대 너비 설정 */
   display: inline-block;
-  margin-bottom: 7px;
+  margin-bottom: 5px;
 }
 
 .video-title-list ul li:hover {
@@ -330,6 +330,22 @@
 
 .delete-button-container {
   margin-right: 8px; /* 삭제 버튼과 제목 간격 조정 */
+}
+
+.icon-buttons {
+  border-radius: 50% 50%;
+
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+}
+
+.icon-buttons:hover {
+  background-color: rgba(0, 0, 0, 0.1);
 }
 
 /*
