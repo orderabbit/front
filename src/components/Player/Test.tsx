@@ -1,6 +1,6 @@
-import React, { useState, useEffect, ChangeEvent, useRef, useCallback, useLayoutEffect } from 'react';
-import axios from 'axios';
 import { deleteMusicRequest, getMusicRequest, postMusicRequest } from 'apis';
+import axios from 'axios';
+import React, { ChangeEvent, useCallback, useEffect, useRef, useState } from 'react';
 import './style.css';
 
 interface Video {
@@ -95,13 +95,10 @@ const Test: React.FC<PlayerProps> = ({ }) => {
     }, [isLoading, isPlaying]);
     // 플레이어 초기화
     const initializePlayer = useCallback(() => {
-        console.log("initializePlayer 함수가 호출되었습니다.");
         if (!videoRef.current) {
-            console.log("videoRef.current가 null입니다. 요소가 마운트될 때까지 기다립니다.");
             return;
         };
         if (playlist.length === 0 || playlist === null) {
-            console.log("playlist가 null입니다. 데이터를 가져올 때까지 기다립니다.");
             return;
         }
         const onPlayerReady = (event: YT.PlayerEvent) => {
@@ -110,29 +107,27 @@ const Test: React.FC<PlayerProps> = ({ }) => {
         };
         const onPlayerStateChange = (event: YT.OnStateChangeEvent) => {
             const playerState = event.data;
-            console.log("플레이어 상태가 변경되었습니다:", playerState);
-            // if (event.data === YT.PlayerState.ENDED && isRepeatEnabled) {
-            //     console.log("반복 재생이 활성화되었습니다. 다음 비디오를 재생합니다.");
-            //     playerRef.current?.playVideo();
-            // }
             switch (playerState) {
-                case YT.PlayerState.ENDED:
-                    console.log("플레이어 상태: ENDED");
-                    const nextIndex = currentVideoIndex + 1;
-                    setCurrentVideoIndex(nextIndex);
-                    console.log('currentVideoIndex:====', nextIndex);
-                    playNext();
-                    break;
                 case YT.PlayerState.PLAYING:
                     console.log("플레이어 상태: PLAYING");
                     setIsPlaying(true);
                     updateCurrentTime();
                     break;
+                case YT.PlayerState.ENDED:
+                    console.log("플레이어 상태: ENDED");
+                    const currentVideoId = playerRef.current?.getVideoUrl().split('v=')[1];
+                    const currentIndex = playlist.findIndex(video => video.id === currentVideoId);
+                    if (currentIndex !== -1) {
+                        setCurrentVideoIndex(currentIndex);
+                        setTimeout(() => playNext(currentIndex), 0);
+                    } else {
+                        console.error("현재 재생 중인 비디오를 찾을 수 없습니다.");
+                    }
+                    break;
                 case YT.PlayerState.PAUSED:
                     console.log("플레이어 상태: PAUSED");
                     setIsPlaying(false);
                     break;
-
             }
         };
         const onPlayerError = (event: YT.OnErrorEvent) => {
@@ -167,13 +162,12 @@ const Test: React.FC<PlayerProps> = ({ }) => {
         });
         console.log("플레이어가 초기화되었습니다.");
     }, [videoRef, playlist]);
-
+    // 비디오 변경 핸들러
     useEffect(() => {
         if (playerRef.current && playerRef.current.loadVideoById) {
             playerRef.current.loadVideoById(playlist[currentVideoIndex].id);
         }
     }, [currentVideoIndex]);
-
     // API 스크립트 로드
     useEffect(() => {
         const existingScript = document.getElementById('youtube-iframe-api');
@@ -207,9 +201,7 @@ const Test: React.FC<PlayerProps> = ({ }) => {
         const initializePlayerIfMounted = () => {
             if (videoRef.current) {
                 initializePlayer();
-            } else {
-                console.log("요소가 마운트되지 않았습니다. 기다립니다...");
-            }
+            } return;
         };
         initializePlayerIfMounted();
     }, [videoRef.current, initializePlayer]);
@@ -324,13 +316,11 @@ const Test: React.FC<PlayerProps> = ({ }) => {
         });
     };
     // 다음 비디오 재생
-    const playNext = useCallback(async () => {
-        console.log('currentVideoIndex:', currentVideoIndex);
-        const nextIndex = (currentVideoIndex + 1) % playlist.length;
+    const playNext = useCallback(async (currentIndex?: number) => {
+        const nextIndex = (typeof currentIndex !== 'undefined' ? currentIndex + 1 : currentVideoIndex + 1) % playlist.length;
         const nextVideo = playlist[nextIndex];
         const videoId = nextVideo.id;
         console.log('nextIndex:', nextIndex);
-
         try {
             const videoInfo = await fetchVideoInfo(videoId);
             if (videoInfo && videoRef.current && playerRef.current) {
@@ -576,7 +566,7 @@ const Test: React.FC<PlayerProps> = ({ }) => {
                                 )}
                             </div>
                         )}
-                        <div className='icon-button' onClick={playNext}>
+                        <div className='icon-button' onClick={() => playNext(currentVideoIndex)}>
                             <div className='icon next-icon'></div>
                         </div>
                         <div className='icon-button' onClick={seekForward}>
@@ -598,13 +588,13 @@ const Test: React.FC<PlayerProps> = ({ }) => {
                             min={0}
                             max={100}
                             onChange={handleVolumeChange} />
-                        <div className="icon-button" onClick={toggleRepeat}>
+                        {/* <div className="icon-button" onClick={toggleRepeat}>
                             {isRepeatEnabled ? (
                                 <div className="icon repeat-on-icon"></div>
                             ) : (
                                 <div className="icon repeat-off-icon"></div>
                             )}
-                        </div>
+                        </div> */}
                     </div>
                     <div className='list-button-container'>
                         <div className='icon-button' onClick={listToggleInputVisible}>
