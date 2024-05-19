@@ -33,7 +33,8 @@ const Test: React.FC<PlayerProps> = ({ }) => {
     const videoRef = useRef<HTMLIFrameElement | null>(null);
     const playerRef = useRef<YT.Player | null>(null);
 
-    const [isRepeatEnabled, setIsRepeatEnabled] = useState(true);
+    const [isRepeatEnabled, setIsRepeatEnabled] = useState(false);
+    const isRepeatEnabledRef = useRef(isRepeatEnabled);
     const [muted, setMuted] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [inputVisible, setInputVisible] = useState(false);
@@ -115,13 +116,19 @@ const Test: React.FC<PlayerProps> = ({ }) => {
                     break;
                 case YT.PlayerState.ENDED:
                     console.log("플레이어 상태: ENDED");
-                    const currentVideoId = playerRef.current?.getVideoUrl().split('v=')[1];
-                    const currentIndex = playlist.findIndex(video => video.id === currentVideoId);
-                    if (currentIndex !== -1) {
-                        setCurrentVideoIndex(currentIndex);
-                        setTimeout(() => playNext(currentIndex), 0);
+                    if (isRepeatEnabledRef.current) {
+                        setCurrentTime(0);
+                        playerRef.current?.seekTo(0, true);
+                        playerRef.current?.playVideo();
                     } else {
-                        console.error("현재 재생 중인 비디오를 찾을 수 없습니다.");
+                        const currentVideoId = playerRef.current?.getVideoUrl().split('v=')[1];
+                        const currentIndex = playlist.findIndex(video => video.id === currentVideoId);
+                        if (currentIndex !== -1) {
+                            setCurrentVideoIndex(currentIndex);
+                            setTimeout(() => playNext(currentIndex), 0);
+                        } else {
+                            console.error("현재 재생 중인 비디오를 찾을 수 없습니다.");
+                        }
                     }
                     break;
                 case YT.PlayerState.PAUSED:
@@ -372,7 +379,13 @@ const Test: React.FC<PlayerProps> = ({ }) => {
     };
     // 반복 재생 토글
     const toggleRepeat = () => {
-        setIsRepeatEnabled(prevState => !prevState);
+        setIsRepeatEnabled(prevState => {
+            const newState = !prevState;
+            isRepeatEnabledRef.current = newState; // useRef 값을 업데이트
+            console.log(`반복 재생 상태가 변경되었습니다: ${newState}`);
+            return newState;
+        });
+        console.log('반복 재생 상태가 변경되었습니다:', !isRepeatEnabled);
     }
     // 볼륨 변경 핸들러
     const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -588,13 +601,13 @@ const Test: React.FC<PlayerProps> = ({ }) => {
                             min={0}
                             max={100}
                             onChange={handleVolumeChange} />
-                        {/* <div className="icon-button" onClick={toggleRepeat}>
+                        <div className="icon-button" onClick={toggleRepeat}>
                             {isRepeatEnabled ? (
                                 <div className="icon repeat-on-icon"></div>
                             ) : (
                                 <div className="icon repeat-off-icon"></div>
                             )}
-                        </div> */}
+                        </div>
                     </div>
                     <div className='list-button-container'>
                         <div className='icon-button' onClick={listToggleInputVisible}>
