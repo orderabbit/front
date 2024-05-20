@@ -18,7 +18,6 @@ import { GetSignInUserResponseDto } from 'apis/response/user';
 import { ResponseDto } from 'apis/response';
 import { User } from 'types/interface';
 import Player from 'components/Player/Player';
-import Test from 'components/Player/Test';
 
 function App() {
   const {setLoginUser, resetLoginUser} = useLoginUserStore();

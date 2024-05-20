@@ -396,3 +396,11 @@
 .repeat-off-icon {
   background-image: url(assets/images/repeat_off.png);
 }
+
+.random-on-icon {
+  background-image: url(assets/images/random_on.png);
+}
+
+.random-off-icon {
+  background-image: url(assets/images/random_off.png);
+}

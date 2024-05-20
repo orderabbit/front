@@ -33,6 +33,7 @@ const Test: React.FC<PlayerProps> = ({ }) => {
     const videoRef = useRef<HTMLIFrameElement | null>(null);
     const playerRef = useRef<YT.Player | null>(null);
 
+    const [randomEnabled, setRandomEnabled] = useState(false);
     const [isRepeatEnabled, setIsRepeatEnabled] = useState(false);
     const isRepeatEnabledRef = useRef(isRepeatEnabled);
     const [muted, setMuted] = useState(false);
@@ -324,7 +325,13 @@ const Test: React.FC<PlayerProps> = ({ }) => {
     };
     // 다음 비디오 재생
     const playNext = useCallback(async (currentIndex?: number) => {
-        const nextIndex = (typeof currentIndex !== 'undefined' ? currentIndex + 1 : currentVideoIndex + 1) % playlist.length;
+        let nextIndex: number;
+        if (randomEnabled) {
+            nextIndex = Math.floor(Math.random() * playlist.length);
+        } else {
+            nextIndex = (typeof currentIndex !== 'undefined' ? currentIndex + 1 : currentVideoIndex + 1) % playlist.length;
+        }
+    
         const nextVideo = playlist[nextIndex];
         const videoId = nextVideo.id;
         console.log('nextIndex:', nextIndex);
@@ -342,7 +349,8 @@ const Test: React.FC<PlayerProps> = ({ }) => {
         } catch (error) {
             console.error('Error fetching next video info:', error);
         }
-    }, [currentVideoIndex, playlist]);
+    }, [currentVideoIndex, playlist, randomEnabled]);
+    
     // 재생/일시정지 토글
     const togglePlay = () => {
         if (videoRef.current) {
@@ -496,7 +504,7 @@ const Test: React.FC<PlayerProps> = ({ }) => {
             });
     };
     // 노래 삭제 핸들러
-    const handleDelete = async (index: number) => { 
+    const handleDelete = async (index: number) => {
         try {
             const videoUrl = playlist[index].videoUrl;
             const videoId = extractYouTubeVideoId(videoUrl);
@@ -516,6 +524,10 @@ const Test: React.FC<PlayerProps> = ({ }) => {
         } catch (error) {
             console.error('음악 삭제 요청 실패:', error);
         }
+    };
+    // 랜덤 재생 토글
+    const toggleRandom = () => {
+        setRandomEnabled(prevState => !prevState);
     };
 
     return (
@@ -602,6 +614,13 @@ const Test: React.FC<PlayerProps> = ({ }) => {
                             min={0}
                             max={100}
                             onChange={handleVolumeChange} />
+                        <div className="icon-button" onClick={toggleRandom}>
+                            {randomEnabled ? (
+                                <div className="icon random-on-icon"></div>
+                            ) : (
+                                <div className="icon random-off-icon"></div>
+                            )}
+                        </div>
                         <div className="icon-button" onClick={toggleRepeat}>
                             {isRepeatEnabled ? (
                                 <div className="icon repeat-on-icon"></div>
