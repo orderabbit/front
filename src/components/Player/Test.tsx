@@ -277,7 +277,7 @@ const Test: React.FC<PlayerProps> = ({ }) => {
     const fetchVideoInfo = async (videoId: string | null): Promise<Video | null> => {
         if (!videoId) return null;
         try {
-            const response = await axios.get(`https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails&id=${videoId}&key=AIzaSyDcwcdL4YrXLMfeAiAQ5sbjuJ5HTGvrz9Y`);
+            const response = await axios.get(`https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails&id=${videoId}&key=AIzaSyBRCweLseGcLizadDsECnpLhBRA2cG8PaM`);
             const videoInfo = response.data.items[0];
 
             if (videoInfo && videoInfo.contentDetails && videoInfo.contentDetails.duration) {
@@ -331,10 +331,8 @@ const Test: React.FC<PlayerProps> = ({ }) => {
         } else {
             nextIndex = (typeof currentIndex !== 'undefined' ? currentIndex + 1 : currentVideoIndex + 1) % playlist.length;
         }
-    
         const nextVideo = playlist[nextIndex];
         const videoId = nextVideo.id;
-        console.log('nextIndex:', nextIndex);
         try {
             const videoInfo = await fetchVideoInfo(videoId);
             if (videoInfo && videoRef.current && playerRef.current) {
@@ -350,7 +348,7 @@ const Test: React.FC<PlayerProps> = ({ }) => {
             console.error('Error fetching next video info:', error);
         }
     }, [currentVideoIndex, playlist, randomEnabled]);
-    
+
     // 재생/일시정지 토글
     const togglePlay = () => {
         if (videoRef.current) {
@@ -512,12 +510,9 @@ const Test: React.FC<PlayerProps> = ({ }) => {
             const deleteResult = await deleteMusicRequest(videoId);
             alert('음악 삭제 성공');
             if (deleteResult) {
-                const newPlaylist = playlist.filter((_, i) => i !== index);
-                setPlaylist(newPlaylist);
-                if (currentVideoIndex >= newPlaylist.length) {
-                    setCurrentVideoIndex(0);
-                    setIsPlaying(true);
-                }
+                const newPlaylist = [...playlist]; // 기존 배열을 복사하여 새 배열 생성
+                newPlaylist.splice(index, 1); // 해당 인덱스의 요소 제거
+                setPlaylist(newPlaylist); // 새로운 플레이리스트로 업데이트
             } else {
                 console.error('음악 삭제 요청 실패');
             }
