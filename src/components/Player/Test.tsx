@@ -460,7 +460,11 @@ const Test: React.FC<PlayerProps> = ({ }) => {
     // 음악 업로드
     const handleMusicUpload = async () => {
         try {
-            const requestBody = { videoUrl: videoUrl };
+            const videoId = extractYouTubeVideoId(videoUrl);
+            if (!videoId) {
+                throw new Error('유효하지 않은 YouTube URL입니다.');
+            }
+            const requestBody = { videoUrl: videoId };
             const response = await postMusicRequest(requestBody);
             setVideoUrl('');
             alert('음악 업로드 성공:')
@@ -492,10 +496,13 @@ const Test: React.FC<PlayerProps> = ({ }) => {
             });
     };
     // 노래 삭제 핸들러
-    const handleDelete = async (index: number) => {
+    const handleDelete = async (index: number) => { 
         try {
             const videoUrl = playlist[index].videoUrl;
-            const deleteResult = await deleteMusicRequest(videoUrl);
+            const videoId = extractYouTubeVideoId(videoUrl);
+            if (!videoId) return;
+            const deleteResult = await deleteMusicRequest(videoId);
+            alert('음악 삭제 성공');
             if (deleteResult) {
                 const newPlaylist = playlist.filter((_, i) => i !== index);
                 setPlaylist(newPlaylist);
@@ -508,12 +515,6 @@ const Test: React.FC<PlayerProps> = ({ }) => {
             }
         } catch (error) {
             console.error('음악 삭제 요청 실패:', error);
-        }
-    };
-
-    const changePlaybackRate = (rate: number) => {
-        if (playerRef.current) {
-            playerRef.current.setPlaybackRate(rate);
         }
     };
 

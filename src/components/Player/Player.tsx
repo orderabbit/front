@@ -1,28 +1,24 @@
-import React, { useState, useEffect, ChangeEvent, useRef, useCallback } from 'react';
+import { deleteMusicRequest, getMusicRequest, postMusicRequest } from 'apis';
 import axios from 'axios';
-import { getMusicRequest, postMusicRequest } from 'apis';
+import React, { ChangeEvent, useCallback, useEffect, useRef, useState } from 'react';
 import './style.css';
 
 interface Video {
     id: string;
     title: string;
     channelTitle: string;
+    videoUrl: string;
     duration: number;
     contentDetails: any;
 }
-
 interface PlayerProps {
     playlist: Video[];
 }
-
-
-
 declare global {
     interface Window {
         onYouTubeIframeAPIReady?: (() => void);
     }
 }
-
 declare global {
     namespace YT {
         interface OnReadyEvent extends PlayerEvent {
@@ -32,15 +28,19 @@ declare global {
     }
 }
 
-const Player: React.FC<PlayerProps> = ({ }) => {
+const Test: React.FC<PlayerProps> = ({ }) => {
 
     const videoRef = useRef<HTMLIFrameElement | null>(null);
     const playerRef = useRef<YT.Player | null>(null);
 
+    const [isRepeatEnabled, setIsRepeatEnabled] = useState(false);
+    const isRepeatEnabledRef = useRef(isRepeatEnabled);
+    const [muted, setMuted] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [inputVisible, setInputVisible] = useState(false);
+    const [listVisible, setListVisible] = useState(false);
     const [dragging, setDragging] = useState(false);
-    const [volume, setVolume] = useState(50);
+    const [volume, setVolume] = useState(100);
     const [duration, setDuration] = useState(0);
     const [currentTime, setCurrentTime] = useState(0);
     const [videoUrl, setVideoUrl] = useState('');
@@ -51,6 +51,23 @@ const Player: React.FC<PlayerProps> = ({ }) => {
     const [mousedownX, setMousedownX] = useState(0);
     const [mousedownY, setMousedownY] = useState(0);
 
+    // 비디오 로드 이벤트
+    useEffect(() => {
+        const handleIframeLoad = () => {
+            console.log('iframe이 로드되었습니다.');
+            initializePlayer();
+        };
+
+        if (videoRef.current) {
+            videoRef.current.onload = handleIframeLoad;
+        }
+
+        return () => {
+            if (videoRef.current) {
+                videoRef.current.onload = null;
+            }
+        };
+    }, [videoRef.current]);
     // 영상 로딩 핸들러
     useEffect(() => {
         setIsLoading(true);
@@ -79,13 +96,10 @@ const Player: React.FC<PlayerProps> = ({ }) => {
     }, [isLoading, isPlaying]);
     // 플레이어 초기화
     const initializePlayer = useCallback(() => {
-        console.log("initializePlayer 함수가 호출되었습니다.");
         if (!videoRef.current) {
-            console.log("videoRef.current가 null입니다. 요소가 마운트될 때까지 기다립니다.");
             return;
         };
         if (playlist.length === 0 || playlist === null) {
-            console.log("playlist가 null입니다. 데이터를 가져올 때까지 기다립니다.");
             return;
         }
         const onPlayerReady = (event: YT.PlayerEvent) => {
@@ -94,35 +108,32 @@ const Player: React.FC<PlayerProps> = ({ }) => {
         };
         const onPlayerStateChange = (event: YT.OnStateChangeEvent) => {
             const playerState = event.data;
-            console.log("플레이어 상태가 변경되었습니다:", playerState);
             switch (playerState) {
-                case YT.PlayerState.UNSTARTED:
-                    console.log("플레이어 상태: UNSTARTED");
-                    break;
-                case YT.PlayerState.ENDED:
-                    console.log("플레이어 상태: ENDED");
-                    playNext();
-                    setCurrentTime(0);
-                    break;
                 case YT.PlayerState.PLAYING:
                     console.log("플레이어 상태: PLAYING");
                     setIsPlaying(true);
                     updateCurrentTime();
-                    // console.log('Current Time:', currentTime);
+                    break;
+                case YT.PlayerState.ENDED:
+                    console.log("플레이어 상태: ENDED");
+                    if (isRepeatEnabledRef.current) {
+                        setCurrentTime(0);
+                        playerRef.current?.seekTo(0, true);
+                        playerRef.current?.playVideo();
+                    } else {
+                        const currentVideoId = playerRef.current?.getVideoUrl().split('v=')[1];
+                        const currentIndex = playlist.findIndex(video => video.id === currentVideoId);
+                        if (currentIndex !== -1) {
+                            setCurrentVideoIndex(currentIndex);
+                            setTimeout(() => playNext(currentIndex), 0);
+                        } else {
+                            console.error("현재 재생 중인 비디오를 찾을 수 없습니다.");
+                        }
+                    }
                     break;
                 case YT.PlayerState.PAUSED:
                     console.log("플레이어 상태: PAUSED");
                     setIsPlaying(false);
-                    break;
-                case YT.PlayerState.BUFFERING:
-                    console.log("플레이어 상태: BUFFERING");
-                    break;
-                case YT.PlayerState.CUED:
-                    console.log("플레이어 상태: CUED");
-                    setIsPlaying(false);
-                    break;
-                default:
-                    console.log("플레이어 상태: UNKNOWN");
                     break;
             }
         };
@@ -142,7 +153,6 @@ const Player: React.FC<PlayerProps> = ({ }) => {
             }
             event.target.stopVideo();
         };
-        console.log();
         playerRef.current = new YT.Player(videoRef.current, {
             height: '0',
             width: '0',
@@ -153,11 +163,18 @@ const Player: React.FC<PlayerProps> = ({ }) => {
                 'onError': onPlayerError
             },
             playerVars: {
-                autoplay: 0, // 자동 재생 활성화
-                controls: 0, // 플레이어 컨트롤 표시
+                autoplay: 0,
+                controls: 0,
             }
         });
+        console.log("플레이어가 초기화되었습니다.");
     }, [videoRef, playlist]);
+    // 비디오 변경 핸들러
+    useEffect(() => {
+        if (playerRef.current && playerRef.current.loadVideoById) {
+            playerRef.current.loadVideoById(playlist[currentVideoIndex].id);
+        }
+    }, [currentVideoIndex]);
     // API 스크립트 로드
     useEffect(() => {
         const existingScript = document.getElementById('youtube-iframe-api');
@@ -185,15 +202,13 @@ const Player: React.FC<PlayerProps> = ({ }) => {
             }
             window.onYouTubeIframeAPIReady = undefined;
         };
-    }, [initializePlayer]);
+    }, []);
 
     useEffect(() => {
         const initializePlayerIfMounted = () => {
             if (videoRef.current) {
                 initializePlayer();
-            } else {
-                console.log("요소가 마운트되지 않았습니다. 기다립니다...");
-            }
+            } return;
         };
         initializePlayerIfMounted();
     }, [videoRef.current, initializePlayer]);
@@ -216,7 +231,6 @@ const Player: React.FC<PlayerProps> = ({ }) => {
     // 현재 시간 업데이트
     const updateCurrentTime = () => {
         if (playerRef.current && typeof playerRef.current.getCurrentTime === 'function') {
-            console.log(playerRef.current.getCurrentTime());
             const currentTime = playerRef.current.getCurrentTime();
             setCurrentTime(currentTime);
         }
@@ -274,6 +288,7 @@ const Player: React.FC<PlayerProps> = ({ }) => {
                     id: videoId,
                     title: snippet.title,
                     channelTitle: snippet.channelTitle,
+                    videoUrl: `https://www.youtube.com/watch?v=${videoId}`,
                     duration: durationInSeconds,
                     contentDetails: contentDetails
                 };
@@ -291,33 +306,43 @@ const Player: React.FC<PlayerProps> = ({ }) => {
         const previousIndex = currentVideoIndex === 0 ? playlist.length - 1 : currentVideoIndex - 1;
         const previousVideo = playlist[previousIndex];
         const videoId = previousVideo.id;
-        fetchVideoInfo(videoId).then(videoInfo => {
-            if (videoInfo) {
-                setCurrentVideoIndex(previousIndex);
-                setDuration(videoInfo.duration);
-                setCurrentTime(0);
-                setIsPlaying(true);
+
+        fetchVideoInfo(videoId).then(async videoInfo => {
+            try {
+                if (videoInfo && videoRef.current && playerRef.current) {
+                    setCurrentVideoIndex(previousIndex);
+                    setDuration(videoInfo.duration);
+                    setCurrentTime(0);
+                    setIsPlaying(true);
+                } else {
+                    console.error('Player is not initialized or loadVideoById function is not available.');
+                }
+            } catch (error) {
+                console.error('Error fetching next video info:', error);
             }
         });
     };
     // 다음 비디오 재생
-    const playNext = async () => {
-        const nextIndex = (currentVideoIndex + 1) % playlist.length;
+    const playNext = useCallback(async (currentIndex?: number) => {
+        const nextIndex = (typeof currentIndex !== 'undefined' ? currentIndex + 1 : currentVideoIndex + 1) % playlist.length;
         const nextVideo = playlist[nextIndex];
         const videoId = nextVideo.id;
-
+        console.log('nextIndex:', nextIndex);
         try {
             const videoInfo = await fetchVideoInfo(videoId);
-            if (videoInfo) {
+            if (videoInfo && videoRef.current && playerRef.current) {
                 setCurrentVideoIndex(nextIndex);
                 setDuration(videoInfo.duration);
                 setCurrentTime(0);
                 setIsPlaying(true);
+                playerRef.current.loadVideoById(videoId);
+            } else {
+                console.error('Player is not initialized or loadVideoById function is not available.');
             }
         } catch (error) {
             console.error('Error fetching next video info:', error);
         }
-    };
+    }, [currentVideoIndex, playlist]);
     // 재생/일시정지 토글
     const togglePlay = () => {
         if (videoRef.current) {
@@ -340,48 +365,47 @@ const Player: React.FC<PlayerProps> = ({ }) => {
             console.log('videoRef.current가 null입니다. 요소가 마운트될 때까지 기다립니다.');
         }
     };
-    // 비디오 URL 변경 핸들러
-    const handleVideoUrlChange = (event: ChangeEvent<HTMLInputElement>) => {
-        setVideoUrl(event.target.value);
+    // 10초 전으로 이동
+    const seekForward = () => {
+        if (!playerRef.current) return;
+        const currentTime = playerRef.current.getCurrentTime();
+        playerRef.current.seekTo(currentTime + 10, true);
     };
-    // 음악 업로드
-    const handleMusicUpload = async () => {
-        try {
-            const requestBody = {
-                videoUrl: videoUrl
-            };
-            const response = await postMusicRequest(requestBody);
-            setVideoUrl('');
-        } catch (error) {
-            console.error('음악 업로드 실패:', error);
-        }
+    // 10초 후로 이동
+    const seekBackward = () => {
+        if (!playerRef.current) return;
+        const currentTime = playerRef.current.getCurrentTime();
+        playerRef.current.seekTo(currentTime - 10, true);
     };
-    // 키 다운 핸들러
-    const handleKeyDown = (event: { key: string; }) => {
-        if (event.key === 'Enter') {
-            handleMusicUpload();
-        }
-    };
-    // 슬라이더 변경 핸들러
-    const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const time = parseFloat(e.target.value);
-        setCurrentTime(time);
-        if (playerRef.current && typeof playerRef.current.seekTo === 'function') {
-            playerRef.current.seekTo(time, true);
-        }
-    };
-    // 슬라이더 마우스 업 핸들러
-    const handleSliderMouseUp = () => {
-        setDragging(false);
-    };
-    // 슬라이더 마우스 다운 핸들러
-    const handleSliderMouseDown = () => {
-        setDragging(true);
-    };
+    // 반복 재생 토글
+    const toggleRepeat = () => {
+        setIsRepeatEnabled(prevState => {
+            const newState = !prevState;
+            isRepeatEnabledRef.current = newState; // useRef 값을 업데이트
+            console.log(`반복 재생 상태가 변경되었습니다: ${newState}`);
+            return newState;
+        });
+        console.log('반복 재생 상태가 변경되었습니다:', !isRepeatEnabled);
+    }
     // 볼륨 변경 핸들러
     const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const volumeLevel = parseFloat(e.target.value);
-        setVolume(volumeLevel);
+        const newVolume = parseInt(e.target.value, 10);
+        setVolume(newVolume);
+        if (playerRef.current && typeof playerRef.current.setVolume === 'function') {
+            playerRef.current.setVolume(newVolume);
+        }
+    };
+    // 음소거 토글
+    const toggleMute = () => {
+        if (playerRef.current && typeof playerRef.current.isMuted === 'function') {
+            if (playerRef.current.isMuted()) {
+                playerRef.current.unMute();
+                setMuted(false);
+            } else {
+                playerRef.current.mute();
+                setMuted(true);
+            }
+        }
     };
     // 마우스 다운 핸들러
     const handleMouseDown = (event: { target?: any; clientX?: any; clientY?: any; }) => {
@@ -407,31 +431,98 @@ const Player: React.FC<PlayerProps> = ({ }) => {
     const handleMouseUp = () => {
         setDragging(false);
     };
-    // 비디오 로드 이벤트
-    useEffect(() => {
-        const handleIframeLoad = () => {
-            console.log('iframe이 로드되었습니다.');
-            initializePlayer();
-        };
-
-        if (videoRef.current) {
-            videoRef.current.onload = handleIframeLoad;
+    // 키 다운 핸들러
+    const handleKeyDown = (event: { key: string; }) => {
+        if (event.key === 'Enter') {
+            handleMusicUpload();
         }
-
-        return () => {
-            if (videoRef.current) {
-                videoRef.current.onload = null;
+    };
+    // 슬라이더 변경 핸들러
+    const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const time = parseFloat(e.target.value);
+        setCurrentTime(time);
+        if (playerRef.current && typeof playerRef.current.seekTo === 'function') {
+            playerRef.current.seekTo(time, true);
+        }
+    };
+    // 슬라이더 마우스 업 핸들러
+    const handleSliderMouseUp = () => {
+        setDragging(false);
+    };
+    // 슬라이더 마우스 다운 핸들러
+    const handleSliderMouseDown = () => {
+        setDragging(true);
+    };
+    // 비디오 URL 변경 핸들러
+    const handleVideoUrlChange = (event: ChangeEvent<HTMLInputElement>) => {
+        setVideoUrl(event.target.value);
+    };
+    // 음악 업로드
+    const handleMusicUpload = async () => {
+        try {
+            const videoId = extractYouTubeVideoId(videoUrl);
+            if (!videoId) {
+                throw new Error('유효하지 않은 YouTube URL입니다.');
             }
-        };
-    }, [videoRef.current]);
+            const requestBody = { videoUrl: videoId };
+            const response = await postMusicRequest(requestBody);
+            setVideoUrl('');
+            alert('음악 업로드 성공:')
+        } catch (error) {
+            console.error('음악 업로드 실패:', error);
+        }
+    };
+    // 업로드 토글
+    const uploadToggleInputVisible = () => {
+        setInputVisible(!inputVisible);
+    };
+    // 리스트 토글
+    const listToggleInputVisible = () => {
+        setListVisible(!listVisible);
+    };
+    // Video 제목 클릭 핸들러
+    const handleVideoTitleClick = (index: number) => {
+        setCurrentVideoIndex(index);
+        setIsPlaying(true);
+        fetchVideoInfo(playlist[index].id)
+            .then(videoInfo => {
+                if (videoInfo) {
+                    setDuration(videoInfo.duration);
+                    setCurrentTime(0);
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching video info:', error);
+            });
+    };
+    // 노래 삭제 핸들러
+    const handleDelete = async (index: number) => { 
+        try {
+            const videoUrl = playlist[index].videoUrl;
+            const videoId = extractYouTubeVideoId(videoUrl);
+            if (!videoId) return;
+            const deleteResult = await deleteMusicRequest(videoId);
+            alert('음악 삭제 성공');
+            if (deleteResult) {
+                const newPlaylist = playlist.filter((_, i) => i !== index);
+                setPlaylist(newPlaylist);
+                if (currentVideoIndex >= newPlaylist.length) {
+                    setCurrentVideoIndex(0);
+                    setIsPlaying(true);
+                }
+            } else {
+                console.error('음악 삭제 요청 실패');
+            }
+        } catch (error) {
+            console.error('음악 삭제 요청 실패:', error);
+        }
+    };
 
     return (
-        <div className="player-wrapper">
-            <div className="player-container" style={{ top: containerPosition.y + 'px', left: containerPosition.x + 'px' }}>
+        <div className='player'>
+            <div className="player-wrapper" style={{ top: containerPosition.y + 'px', left: containerPosition.x + 'px' }}>
                 <div className="handle"
                     style={{
-                        top: '0',
-                        left: '50%',
                         transform: 'translateX(-50%)',
                         cursor: 'grab',
                         backgroundColor: 'transparent',
@@ -439,79 +530,128 @@ const Player: React.FC<PlayerProps> = ({ }) => {
                     onMouseDown={handleMouseDown}
                     onMouseMove={handleMouseMove}
                     onMouseUp={handleMouseUp} />
-                {playlist[currentVideoIndex] && (
-                    <div className="video-info">
-                        <div ref={videoRef}>
-                            <iframe
-                                src={`https://www.youtube.com/embed/${playlist[currentVideoIndex].id}?enablejsapi=0&origin=${encodeURIComponent(window.location.origin)}`}
-                                frameBorder="0"
-                                allowFullScreen
-                                style={{ display: isPlaying ? 'none' : 'none' }}
-                            ></iframe>
-                        </div>
-                        <img className='thumbnail' src={`https://img.youtube.com/vi/${playlist[currentVideoIndex].id}/default.jpg`} alt="Video Thumbnail" />
-                        <div className="info-details">
-                            <h3 className='info-title'>{playlist[currentVideoIndex].title}</h3>
-                            <p className='info-channelTitle'>{`artist: ${playlist[currentVideoIndex].channelTitle}`}</p>
-                        </div>
-                    </div>
-                )}
-                {duration > 0 && (
-                    <div className="progress-bar">
-                        <input
-                            type="range"
-                            className='progress-slider'
-                            value={currentTime}
-                            max={duration}
-                            onChange={handleSliderChange}
-                            onMouseDown={handleSliderMouseDown}
-                            onMouseUp={handleSliderMouseUp} />
-                        <div className="progress-bar-time">
-                            <p className='time'>{formatTime(currentTime)}</p>
-                            <p className='time'>{formatTime(duration)}</p>
-                        </div>
-                    </div>
-                )}
-                <div className="controls">
-                    <div className='icon-button' onClick={playPrevious}>
-                        <div className='icon pre-icon'></div>
-                    </div>
-                    {videoRef.current && (
-                        <div className='icon-button' onClick={togglePlay}>
-                            {isPlaying ? (
-                                <div className='icon pause-icon'></div>
-                            ) : (
-                                <div className='icon play-icon'></div>
-                            )}
+                <div className="player-container">
+                    {playlist[currentVideoIndex] && (
+                        <div className="video-info">
+                            <div ref={videoRef}>
+                                <iframe
+                                    src={`https://www.youtube.com/embed/${playlist[currentVideoIndex].id}?enablejsapi=0&origin=${encodeURIComponent(window.location.origin)}`}
+                                    frameBorder="0"
+                                    allowFullScreen
+                                    style={{ display: isPlaying ? 'none' : 'none' }}
+                                ></iframe>
+                            </div>
+                            <img className='thumbnail' src={`https://img.youtube.com/vi/${playlist[currentVideoIndex].id}/default.jpg`} alt="Video Thumbnail" />
+                            <div className="info-details">
+                                <div className='info-title'>{playlist[currentVideoIndex].title}</div>
+                                <p className='info-channelTitle'>{`artist: ${playlist[currentVideoIndex].channelTitle}`}</p>
+                            </div>
                         </div>
                     )}
-                    <div className='icon-button' onClick={playNext}>
-                        <div className='icon next-icon'></div>
+                    {duration > 0 && (
+                        <div className="progress-bar">
+                            <input
+                                type="range"
+                                className='progress-slider'
+                                value={currentTime}
+                                max={duration}
+                                onChange={handleSliderChange}
+                                onMouseDown={handleSliderMouseDown}
+                                onMouseUp={handleSliderMouseUp} />
+                            <div className="progress-bar-time">
+                                <p className='time'>{formatTime(currentTime)}</p>
+                                <p className='time'>{formatTime(duration)}</p>
+                            </div>
+                        </div>
+                    )}
+                    <div className="controls">
+                        <div className='icon-button' onClick={seekBackward}>
+                            <div className='icon backward-icon'></div>
+                        </div>
+                        <div className='icon-button' onClick={playPrevious}>
+                            <div className='icon pre-icon'></div>
+                        </div>
+                        {videoRef.current && (
+                            <div className='icon-button' onClick={togglePlay}>
+                                {isPlaying ? (
+                                    <div className='icon pause-icon'></div>
+                                ) : (
+                                    <div className='icon play-icon'></div>
+                                )}
+                            </div>
+                        )}
+                        <div className='icon-button' onClick={() => playNext(currentVideoIndex)}>
+                            <div className='icon next-icon'></div>
+                        </div>
+                        <div className='icon-button' onClick={seekForward}>
+                            <div className='icon forward-icon'></div>
+                        </div>
                     </div>
-                </div>
-                <div className="volume-control">
-                    <input
-                        type="range"
-                        className="volume-slider"
-                        value={volume}
-                        min={0}
-                        max={100}
-                        onChange={handleVolumeChange} />
-                </div>
-                {!inputVisible && (
-                    <button className="upload-button" onClick={() => setInputVisible(true)}>업로드</button>
-                )}
-                {inputVisible && (
-                    <div>
+                    <div className="volume-control">
+                        <div className='icon-button' onClick={toggleMute}>
+                            {muted ? (
+                                <div className='icon mute-icon'></div>
+                            ) : (
+                                <div className='icon unmute-icon'></div>
+                            )}
+                        </div>
                         <input
-                            type="text"
-                            value={videoUrl}
-                            onChange={handleVideoUrlChange}
-                            onKeyDown={handleKeyDown}
-                            placeholder="URL 입력" />
-                        <button className="upload-button" onClick={handleMusicUpload}>업로드</button>
+                            type="range"
+                            className="volume-slider"
+                            value={volume}
+                            min={0}
+                            max={100}
+                            onChange={handleVolumeChange} />
+                        <div className="icon-button" onClick={toggleRepeat}>
+                            {isRepeatEnabled ? (
+                                <div className="icon repeat-on-icon"></div>
+                            ) : (
+                                <div className="icon repeat-off-icon"></div>
+                            )}
+                        </div>
                     </div>
-                )}
+                    <div className='list-button-container'>
+                        <div className='icon-button' onClick={listToggleInputVisible}>
+                            <div className='icon list-icon'></div>
+                        </div>
+                    </div>
+                    <div className='upload-button-container'>
+                        <div className='icon-button' onClick={uploadToggleInputVisible}>
+                            <div className='icon upload-icon'></div>
+                        </div>
+                    </div>
+                </div>
+                <div className="url-input-container">
+                    <div className="upload-box-container">
+                        <div style={{ position: 'absolute', bottom: '0', left: '0' }}>
+                            {inputVisible && (
+                                <div>
+                                    <input
+                                        type="text"
+                                        value={videoUrl}
+                                        onChange={handleVideoUrlChange}
+                                        onKeyDown={handleKeyDown}
+                                        placeholder="URL 입력" />
+                                    <div className="upload-button" onClick={handleMusicUpload}></div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+                <div className='video-title-list' style={{ display: listVisible ? 'block' : 'none' }}>
+                    <ul>
+                        {playlist.map((video, index) => (
+                            <li key={index}>
+                                <div className='delete-button-container'>
+                                    <div className='icon-buttons' onClick={() => handleDelete(index)}>
+                                        <div className='icon delete-icon'></div>
+                                    </div>
+                                </div>
+                                <span onClick={() => handleVideoTitleClick(index)}>{video.title}</span>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
             </div>
         </div>
     );
@@ -531,4 +671,4 @@ const parseDuration = (iso8601Duration: string): number => {
     const seconds = match[3] ? parseInt(match[3].slice(0, -1)) : 0;
     return hours + minutes + seconds;
 };
-export default Player;
+export default Test;
