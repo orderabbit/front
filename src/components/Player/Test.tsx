@@ -31,6 +31,7 @@ declare global {
 
 const ASDF: React.FC<PlayerProps> = ({ }) => {
 
+    const ApiKey = 'AIzaSyBRCweLseGcLizadDsECnpLhBRA2cG8PaM';
     const videoRef = useRef<HTMLIFrameElement | null>(null);
     const playerRef = useRef<YT.Player | null>(null);
     const socketRef = useRef<WebSocket | null>(null);
@@ -73,6 +74,7 @@ const ASDF: React.FC<PlayerProps> = ({ }) => {
                     setPlaylist(prevPlaylist => [...prevPlaylist, videoInfo]);
                 }
             }
+            console.log('웹 소켓 메시지를 받았습니다:', event.data);
         };
 
         socket.onclose = (event) => {
@@ -317,7 +319,7 @@ const ASDF: React.FC<PlayerProps> = ({ }) => {
     const fetchVideoInfo = async (videoId: string | null): Promise<Video | null> => {
         if (!videoId) return null;
         try {
-            const response = await axios.get(`https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails&id=${videoId}&key=AIzaSyBRCweLseGcLizadDsECnpLhBRA2cG8PaM`);
+            const response = await axios.get(`https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails&id=${videoId}&key=${ApiKey}`);
             const videoInfo = response.data.items[0];
 
             if (videoInfo && videoInfo.contentDetails && videoInfo.contentDetails.duration) {
@@ -557,14 +559,6 @@ const ASDF: React.FC<PlayerProps> = ({ }) => {
     // 랜덤 재생 토글
     const toggleRandom = () => {
         setRandomEnabled(prevState => !prevState);
-    };
-    // URL 유효성 검사
-    const isValidYouTubeUrl = (url: string) => {
-        const domain = new URL(url).hostname.toLowerCase();
-        if (domain.includes('youtube.com') || domain.includes('youtu.be')) {
-            return true;
-        }
-        return false;
     };
     // 음악 일괄 업로드
     const handleBatchMusicUpload = async (urls: string[]) => {
