@@ -32,6 +32,7 @@ const Test: React.FC<PlayerProps> = ({ }) => {
 
     const videoRef = useRef<HTMLIFrameElement | null>(null);
     const playerRef = useRef<YT.Player | null>(null);
+    const socketRef = useRef<WebSocket | null>(null);
 
     const [randomEnabled, setRandomEnabled] = useState(false);
     const [isRepeatEnabled, setIsRepeatEnabled] = useState(false);
@@ -52,26 +53,40 @@ const Test: React.FC<PlayerProps> = ({ }) => {
     const [mousedownX, setMousedownX] = useState(0);
     const [mousedownY, setMousedownY] = useState(0);
 
+
     useEffect(() => {
-        const ws = new WebSocket('ws://localhost:4040/playlistUpdate');
-        ws.onopen = () => {
+        const socket = new WebSocket('ws://localhost:4040/playlistUpdate');
+
+        socket.onopen = () => {
             console.log('웹 소켓 연결이 열렸습니다.');
-            ws.send('updatePlaylist');
+            socket.send('updatePlaylist');
         };
-        ws.onmessage = (event) => {
-            const list = JSON.parse(event.data);
-            console.log('서버에서 플레이리스트를 받았습니다:', list);
-            setPlaylist(list);
+
+        socket.onmessage = async (event) => {
+            const url = event.data;
+            const videoId = extractYouTubeVideoId(url);
+            if (videoId) {
+                const videoInfo = await fetchVideoInfo(videoId);
+                if (videoInfo) {
+                    setPlaylist(prevPlaylist => [...prevPlaylist, videoInfo]);
+                }
+            }
         };
-        ws.onclose = (event) => {
-            console.log('웹 소켓 연결이 닫혔습니다. 코드:', event.code, '원인:', event.reason);
+
+        socket.onclose = (event) => {
+            console.log('웹 소켓 연결이 닫혔습니다.', event.code, event.reason);
         };
+
+        socket.onerror = (error) => {
+            console.error('웹 소켓 에러:', error);
+        };
+
+        socketRef.current = socket;
+
         return () => {
-            ws.close();
+            socket.close();
         };
     }, []);
-
-
     // 비디오 로드 이벤트
     useEffect(() => {
         const handleIframeLoad = () => {
@@ -174,7 +189,7 @@ const Test: React.FC<PlayerProps> = ({ }) => {
             }
             event.target.stopVideo();
         };
-        console.log('videoRef.current:', videoRef.current);
+        console.log('videoRef', videoRef);
         const player = new YT.Player(videoRef.current, {
             height: '0',
             width: '0',
@@ -226,7 +241,6 @@ const Test: React.FC<PlayerProps> = ({ }) => {
             window.onYouTubeIframeAPIReady = undefined;
         };
     }, []);
-
     useEffect(() => {
         const initializePlayerIfMounted = () => {
             if (videoRef.current) {
@@ -264,30 +278,31 @@ const Test: React.FC<PlayerProps> = ({ }) => {
         return () => clearInterval(intervalId);
     }, []);
     // 음악 데이터 가져오기
-    // const fetchMusicData = async () => {
-    //     try {
-    //         const musicData = await getMusicRequest();
-    //         const fetchedPlaylist = musicData?.playlist || [];
-    //         const videos: Video[] = [];
-    //         for (const url of fetchedPlaylist) {
-    //             const videoId = extractYouTubeVideoId(url);
-    //             if (videoId) {
-    //                 const videoInfo = await fetchVideoInfo(videoId);
-    //                 if (videoInfo) {
-    //                     videos.push(videoInfo);
-    //                 }
-    //             }
-    //         }
-    //         return videos;
-    //     } catch (error) {
-    //         console.error('Error fetching music data:', error);
-    //         return [];
-    //     }
-    // };
-    // 비디오 정보 가져오기
-    // useEffect(() => {
-    //     fetchMusicData().then(videos => setPlaylist(videos));
-    // }, []);
+    useEffect(() => {
+        const fetchMusicData = async () => {
+            try {
+                const musicData = await getMusicRequest();
+                const fetchedPlaylist = musicData?.playlist || [];
+                const videos: Video[] = [];
+
+                for (const url of fetchedPlaylist) {
+                    const videoId = extractYouTubeVideoId(url);
+                    if (videoId) {
+                        const videoInfo = await fetchVideoInfo(videoId);
+                        if (videoInfo) {
+                            videos.push(videoInfo);
+                        }
+                    }
+                }
+                return videos;
+            } catch (error) {
+                console.error('Error fetching music data:', error);
+                return [];
+            }
+        };
+
+        fetchMusicData().then(videos => setPlaylist(videos));
+    }, []);
     // 유튜브 비디오 ID 추출
     const extractYouTubeVideoId = (url: string): string | null => {
         const youtubeUrlPattern =
@@ -493,13 +508,18 @@ const Test: React.FC<PlayerProps> = ({ }) => {
                 throw new Error('유효하지 않은 YouTube URL입니다.');
             }
             const requestBody = { videoUrl: videoId };
-            const response = await postMusicRequest(requestBody);
+            await postMusicRequest(requestBody);
             setVideoUrl('');
-            alert('음악 업로드 성공:')
+
+            if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+                socketRef.current.send('updatePlaylist');
+            }
+            alert('음악 업로드 성공');
         } catch (error) {
             console.error('음악 업로드 실패:', error);
         }
     };
+
     // 업로드 토글
     const uploadToggleInputVisible = () => {
         setInputVisible(!inputVisible);
