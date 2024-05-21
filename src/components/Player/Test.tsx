@@ -2,6 +2,7 @@ import { deleteMusicRequest, getMusicRequest, postMusicRequest } from 'apis';
 import axios from 'axios';
 import React, { ChangeEvent, useCallback, useEffect, useRef, useState } from 'react';
 import './style.css';
+import { PostMusicRequestDto } from 'apis/request/music';
 
 interface Video {
     id: string;
@@ -28,12 +29,13 @@ declare global {
     }
 }
 
-const Test: React.FC<PlayerProps> = ({ }) => {
+const ASDF: React.FC<PlayerProps> = ({ }) => {
 
     const videoRef = useRef<HTMLIFrameElement | null>(null);
     const playerRef = useRef<YT.Player | null>(null);
     const socketRef = useRef<WebSocket | null>(null);
 
+    const [urls, setUrls] = useState('');
     const [randomEnabled, setRandomEnabled] = useState(false);
     const [isRepeatEnabled, setIsRepeatEnabled] = useState(false);
     const isRepeatEnabledRef = useRef(isRepeatEnabled);
@@ -161,7 +163,7 @@ const Test: React.FC<PlayerProps> = ({ }) => {
                         const currentIndex = playlist.findIndex(video => video.id === currentVideoId);
                         if (currentIndex !== -1) {
                             setCurrentVideoIndex(currentIndex);
-                            setTimeout(() => playNext(currentIndex), 0);
+                            setTimeout(() => playNext(playlist, currentIndex), 0);
                         } else {
                             console.error("현재 재생 중인 비디오를 찾을 수 없습니다.");
                         }
@@ -189,23 +191,24 @@ const Test: React.FC<PlayerProps> = ({ }) => {
             }
             event.target.stopVideo();
         };
-        console.log('videoRef', videoRef);
-        const player = new YT.Player(videoRef.current, {
-            height: '0',
-            width: '0',
-            videoId: playlist[currentVideoIndex].id,
-            events: {
-                'onReady': onPlayerReady,
-                'onStateChange': onPlayerStateChange,
-                'onError': onPlayerError
-            },
-            playerVars: {
-                autoplay: 0,
-                controls: 0,
-            }
-        });
-        playerRef.current = player;
-        console.log("플레이어가 초기화되었습니다.");
+
+        if (!playerRef.current) {
+            const player = new YT.Player(videoRef.current, {
+                height: '100',
+                width: '222',
+                videoId: playlist[currentVideoIndex].id,
+                events: {
+                    'onReady': onPlayerReady,
+                    'onStateChange': onPlayerStateChange,
+                    'onError': onPlayerError
+                },
+                playerVars: {
+                    autoplay: 0,
+                    controls: 0,
+                }
+            });
+            playerRef.current = player;
+        }
     }, [videoRef, playlist]);
     // 비디오 변경 핸들러
     useEffect(() => {
@@ -361,23 +364,23 @@ const Test: React.FC<PlayerProps> = ({ }) => {
         });
     };
     // 다음 비디오 재생
-    const playNext = useCallback(async (currentIndex?: number) => {
+    const playNext = useCallback(async (newPlayList: Video[], currentIndex?: number) => {
         let nextIndex: number;
         if (randomEnabled) {
-            nextIndex = Math.floor(Math.random() * playlist.length);
+            nextIndex = Math.floor(Math.random() * newPlayList.length);
         } else {
             nextIndex = (typeof currentIndex !== 'undefined' ? currentIndex + 1 : currentVideoIndex + 1) % playlist.length;
         }
-        const nextVideo = playlist[nextIndex];
+        const nextVideo = newPlayList[nextIndex];
         const videoId = nextVideo.id;
         try {
             const videoInfo = await fetchVideoInfo(videoId);
+
             if (videoInfo && videoRef.current && playerRef.current) {
                 setCurrentVideoIndex(nextIndex);
                 setDuration(videoInfo.duration);
                 setCurrentTime(0);
                 setIsPlaying(true);
-                console.log('playerRef.current:', playerRef.current);
                 playerRef.current.loadVideoById(videoId);
             } else {
                 console.error('Player is not initialized or loadVideoById function is not available.');
@@ -477,7 +480,8 @@ const Test: React.FC<PlayerProps> = ({ }) => {
     // 키 다운 핸들러
     const handleKeyDown = (event: { key: string; }) => {
         if (event.key === 'Enter') {
-            handleMusicUpload();
+            const urls = videoUrl.split(',').map(url => url.trim());
+            handleBatchMusicUpload(urls);
         }
     };
     // 슬라이더 변경 핸들러
@@ -500,26 +504,6 @@ const Test: React.FC<PlayerProps> = ({ }) => {
     const handleVideoUrlChange = (event: ChangeEvent<HTMLInputElement>) => {
         setVideoUrl(event.target.value);
     };
-    // 음악 업로드
-    const handleMusicUpload = async () => {
-        try {
-            const videoId = extractYouTubeVideoId(videoUrl);
-            if (!videoId) {
-                throw new Error('유효하지 않은 YouTube URL입니다.');
-            }
-            const requestBody = { videoUrl: videoId };
-            await postMusicRequest(requestBody);
-            setVideoUrl('');
-
-            if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
-                socketRef.current.send('updatePlaylist');
-            }
-            alert('음악 업로드 성공');
-        } catch (error) {
-            console.error('음악 업로드 실패:', error);
-        }
-    };
-
     // 업로드 토글
     const uploadToggleInputVisible = () => {
         setInputVisible(!inputVisible);
@@ -555,14 +539,12 @@ const Test: React.FC<PlayerProps> = ({ }) => {
                 const newPlaylist = [...playlist];
                 newPlaylist.splice(index, 1);
                 setPlaylist(newPlaylist);
-                if (isPlaying && currentVideoIndex === index) {
-                    setIsPlaying(false);
-                    // setTimeout(() => {
-                    //     console.log('isPlaying:', isPlaying);
-                    // }, 0);
 
+                if (isPlaying && currentVideoIndex === index) {
+                    playerRef.current?.stopVideo();
+                    setIsPlaying(false);
                     setTimeout(() => {
-                        playNext(currentVideoIndex - 1);
+                        playNext(newPlaylist, currentVideoIndex - 1);
                     }, 0);
                 }
             } else {
@@ -576,6 +558,43 @@ const Test: React.FC<PlayerProps> = ({ }) => {
     const toggleRandom = () => {
         setRandomEnabled(prevState => !prevState);
     };
+    // URL 유효성 검사
+    const isValidYouTubeUrl = (url: string) => {
+        const domain = new URL(url).hostname.toLowerCase();
+        if (domain.includes('youtube.com') || domain.includes('youtu.be')) {
+            return true;
+        }
+        return false;
+    };
+    // 음악 일괄 업로드
+    const handleBatchMusicUpload = async (urls: string[]) => {
+        try {
+            const videoIds = urls.map(url => extractYouTubeVideoId(url)).filter(Boolean) as string[];
+
+            const requests = videoIds.map(async (videoId) => {
+                const requestBody: PostMusicRequestDto = { videoUrl: videoId };
+                await postMusicRequest(requestBody);
+            });
+
+            await Promise.all(requests);
+
+            if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+                socketRef.current.send('updatePlaylist');
+            }
+
+            setVideoUrl('');
+            alert('음악 업로드 성공');
+        } catch (error) {
+            console.error('음악 업로드 실패:', error);
+        }
+    };
+    // 업로드 버튼 클릭 핸들러
+    const handleUploadButtonClick = () => {
+        const urls = [videoUrl];
+        handleBatchMusicUpload(urls);
+    };
+
+
 
     return (
         <div className='player'>
@@ -639,7 +658,7 @@ const Test: React.FC<PlayerProps> = ({ }) => {
                                 )}
                             </div>
                         )}
-                        <div className='icon-button' onClick={() => playNext(currentVideoIndex)}>
+                        <div className='icon-button' onClick={() => playNext(playlist, currentVideoIndex)}>
                             <div className='icon next-icon'></div>
                         </div>
                         <div className='icon-button' onClick={seekForward}>
@@ -697,8 +716,8 @@ const Test: React.FC<PlayerProps> = ({ }) => {
                                         value={videoUrl}
                                         onChange={handleVideoUrlChange}
                                         onKeyDown={handleKeyDown}
-                                        placeholder="URL 입력" />
-                                    <div className="upload-button" onClick={handleMusicUpload}></div>
+                                        placeholder="URL 전체 입력" />
+                                    <div className="upload-button" onClick={handleUploadButtonClick}></div>
                                 </div>
                             )}
                         </div>
@@ -707,7 +726,8 @@ const Test: React.FC<PlayerProps> = ({ }) => {
                 <div className='video-title-list' style={{ display: listVisible ? 'block' : 'none' }}>
                     <ul>
                         {playlist.map((video, index) => (
-                            <li key={index}>
+                            <li key={index} style={{ backgroundColor: index === currentVideoIndex ? '#CCCCCC' : 'transparent' }}>
+                                {/* <div className="divider">{"\|"}</div> */}
                                 <div className='delete-button-container'>
                                     <div className='icon-buttons' onClick={() => handleDelete(index)}>
                                         <div className='icon delete-icon'></div>
@@ -737,4 +757,4 @@ const parseDuration = (iso8601Duration: string): number => {
     const seconds = match[3] ? parseInt(match[3].slice(0, -1)) : 0;
     return hours + minutes + seconds;
 };
-export default Test;
+export default ASDF;
