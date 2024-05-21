@@ -29,14 +29,15 @@ declare global {
     }
 }
 
-const ASDF: React.FC<PlayerProps> = ({ }) => {
+const Test: React.FC<PlayerProps> = ({ }) => {
 
     const ApiKey = 'AIzaSyBRCweLseGcLizadDsECnpLhBRA2cG8PaM';
     const videoRef = useRef<HTMLIFrameElement | null>(null);
     const playerRef = useRef<YT.Player | null>(null);
     const socketRef = useRef<WebSocket | null>(null);
 
-    const [deletedIndex, setDeletedIndex] = useState(0);
+    const [isInitialMount, setIsInitialMount] = useState(true);
+    const [deletedIndex, setDeletedIndex] = useState<number | null>(null);
     const [randomEnabled, setRandomEnabled] = useState(false);
     const [isRepeatEnabled, setIsRepeatEnabled] = useState(false);
     const isRepeatEnabledRef = useRef(isRepeatEnabled);
@@ -78,6 +79,7 @@ const ASDF: React.FC<PlayerProps> = ({ }) => {
                             return null;
                         })
                     );
+                    console.log('videoInfos:', videoInfos);
                     const validVideoInfos = videoInfos.filter(info => info !== null) as Video[];
                     setPlaylist((prevPlaylist) => [...prevPlaylist, ...validVideoInfos]);
                 }
@@ -217,6 +219,7 @@ const ASDF: React.FC<PlayerProps> = ({ }) => {
             });
             playerRef.current = player;
         }
+        console.log('플레이어가 초기화되었습니다.');
     }, [videoRef, playlist]);
     // 비디오 변경 핸들러
     useEffect(() => {
@@ -379,13 +382,12 @@ const ASDF: React.FC<PlayerProps> = ({ }) => {
         } else {
             nextIndex = (typeof currentIndex !== 'undefined' ? currentIndex + 1 : currentVideoIndex + 1) % playlist.length;
         }
-        console.log('playlist:', playlist);
         if (playlist.length === 0) return;
         const nextVideo = playlist[nextIndex];
         const videoId = nextVideo.id;
         try {
             const videoInfo = await fetchVideoInfo(videoId);
-
+            console.log('playerRef.current:', playerRef.current);
             if (videoInfo && videoRef.current && playerRef.current) {
                 setCurrentVideoIndex(nextIndex);
                 setDuration(videoInfo.duration);
@@ -564,9 +566,12 @@ const ASDF: React.FC<PlayerProps> = ({ }) => {
         }
     };
     useEffect(() => {
-        if (deletedIndex !== null) {
-            playNext(deletedIndex - 1);
-            setDeletedIndex(0); // 상태 초기화
+        if (isInitialMount) {
+            setIsInitialMount(false);
+        } else {
+            if (deletedIndex !== null && playerRef.current) {
+                playNext(deletedIndex - 1);
+            }
         }
     }, [playlist, deletedIndex, playNext]);
     // 랜덤 재생 토글
@@ -764,4 +769,4 @@ const parseDuration = (iso8601Duration: string): number => {
     const seconds = match[3] ? parseInt(match[3].slice(0, -1)) : 0;
     return hours + minutes + seconds;
 };
-export default ASDF;
+export default Test;
