@@ -36,7 +36,7 @@ const ASDF: React.FC<PlayerProps> = ({ }) => {
     const playerRef = useRef<YT.Player | null>(null);
     const socketRef = useRef<WebSocket | null>(null);
 
-    const [urls, setUrls] = useState('');
+    const [deletedIndex, setDeletedIndex] = useState(0);
     const [randomEnabled, setRandomEnabled] = useState(false);
     const [isRepeatEnabled, setIsRepeatEnabled] = useState(false);
     const isRepeatEnabledRef = useRef(isRepeatEnabled);
@@ -66,27 +66,33 @@ const ASDF: React.FC<PlayerProps> = ({ }) => {
         };
 
         socket.onmessage = async (event) => {
-            const url = event.data;
-            const videoId = extractYouTubeVideoId(url);
-            if (videoId) {
-                const videoInfo = await fetchVideoInfo(videoId);
-                if (videoInfo) {
-                    setPlaylist(prevPlaylist => [...prevPlaylist, videoInfo]);
+            try {
+                const urls = JSON.parse(event.data); // JSON 파싱
+                if (Array.isArray(urls)) {
+                    const videoInfos = await Promise.all(
+                        urls.map(async (url) => {
+                            const videoId = extractYouTubeVideoId(url);
+                            if (videoId) {
+                                return await fetchVideoInfo(videoId);
+                            }
+                            return null;
+                        })
+                    );
+                    const validVideoInfos = videoInfos.filter(info => info !== null) as Video[];
+                    setPlaylist((prevPlaylist) => [...prevPlaylist, ...validVideoInfos]);
                 }
+            } catch (error) {
+                console.error('Error processing websocket message:', error);
             }
             console.log('웹 소켓 메시지를 받았습니다:', event.data);
         };
-
         socket.onclose = (event) => {
             console.log('웹 소켓 연결이 닫혔습니다.', event.code, event.reason);
         };
-
         socket.onerror = (error) => {
             console.error('웹 소켓 에러:', error);
         };
-
         socketRef.current = socket;
-
         return () => {
             socket.close();
         };
@@ -165,7 +171,7 @@ const ASDF: React.FC<PlayerProps> = ({ }) => {
                         const currentIndex = playlist.findIndex(video => video.id === currentVideoId);
                         if (currentIndex !== -1) {
                             setCurrentVideoIndex(currentIndex);
-                            setTimeout(() => playNext(playlist, currentIndex), 0);
+                            setTimeout(() => playNext(currentIndex), 0);
                         } else {
                             console.error("현재 재생 중인 비디오를 찾을 수 없습니다.");
                         }
@@ -366,14 +372,16 @@ const ASDF: React.FC<PlayerProps> = ({ }) => {
         });
     };
     // 다음 비디오 재생
-    const playNext = useCallback(async (newPlayList: Video[], currentIndex?: number) => {
+    const playNext = useCallback(async (currentIndex?: number) => {
         let nextIndex: number;
         if (randomEnabled) {
-            nextIndex = Math.floor(Math.random() * newPlayList.length);
+            nextIndex = Math.floor(Math.random() * playlist.length);
         } else {
             nextIndex = (typeof currentIndex !== 'undefined' ? currentIndex + 1 : currentVideoIndex + 1) % playlist.length;
         }
-        const nextVideo = newPlayList[nextIndex];
+        console.log('playlist:', playlist);
+        if (playlist.length === 0) return;
+        const nextVideo = playlist[nextIndex];
         const videoId = nextVideo.id;
         try {
             const videoInfo = await fetchVideoInfo(videoId);
@@ -540,14 +548,13 @@ const ASDF: React.FC<PlayerProps> = ({ }) => {
                 alert('음악 삭제 성공');
                 const newPlaylist = [...playlist];
                 newPlaylist.splice(index, 1);
+                
+                console.log('newPlaylist:', newPlaylist);
                 setPlaylist(newPlaylist);
-
+                setDeletedIndex(index);
                 if (isPlaying && currentVideoIndex === index) {
                     playerRef.current?.stopVideo();
                     setIsPlaying(false);
-                    setTimeout(() => {
-                        playNext(newPlaylist, currentVideoIndex - 1);
-                    }, 0);
                 }
             } else {
                 console.error('음악 삭제 요청 실패');
@@ -556,6 +563,12 @@ const ASDF: React.FC<PlayerProps> = ({ }) => {
             console.error('음악 삭제 요청 실패:', error);
         }
     };
+    useEffect(() => {
+        if (deletedIndex !== null) {
+            playNext(deletedIndex - 1);
+            setDeletedIndex(0); // 상태 초기화
+        }
+    }, [playlist, deletedIndex, playNext]);
     // 랜덤 재생 토글
     const toggleRandom = () => {
         setRandomEnabled(prevState => !prevState);
@@ -652,7 +665,7 @@ const ASDF: React.FC<PlayerProps> = ({ }) => {
                                 )}
                             </div>
                         )}
-                        <div className='icon-button' onClick={() => playNext(playlist, currentVideoIndex)}>
+                        <div className='icon-button' onClick={() => playNext(currentVideoIndex)}>
                             <div className='icon next-icon'></div>
                         </div>
                         <div className='icon-button' onClick={seekForward}>
