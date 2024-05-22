@@ -37,6 +37,7 @@ const Test: React.FC<PlayerProps> = ({ }) => {
     const playerRef = useRef<YT.Player | null>(null);
     const socketRef = useRef<WebSocket | null>(null);
 
+    const [subtitles, setSubtitles] = useState<string[]>([]);
     const [shouldRunEffect, setShouldRunEffect] = useState(true);
     const [isInitialMount, setIsInitialMount] = useState(true);
     const [deletedIndex, setDeletedIndex] = useState<number | null>(null);
@@ -81,14 +82,12 @@ const Test: React.FC<PlayerProps> = ({ }) => {
                             return null;
                         })
                     );
-                    console.log('videoInfos:', videoInfos);
                     const validVideoInfos = videoInfos.filter(info => info !== null) as Video[];
                     setPlaylist((prevPlaylist) => [...prevPlaylist, ...validVideoInfos]);
                 }
             } catch (error) {
                 console.error('Error processing websocket message:', error);
             }
-            console.log('웹 소켓 메시지를 받았습니다:', event.data);
         };
         socket.onclose = (event) => {
             console.log('웹 소켓 연결이 닫혔습니다.', event.code, event.reason);
@@ -133,10 +132,8 @@ const Test: React.FC<PlayerProps> = ({ }) => {
     }, [isLoading, isPlaying]);
     // 비디오 변경 핸들러
     useEffect(() => {
-        console.log('shouldRunEffect:', shouldRunEffect)
         if (shouldRunEffect && playerRef.current && playerRef.current.loadVideoById) {
             playerRef.current.loadVideoById(playlist[currentVideoIndex].id);
-
         }
     }, [currentVideoIndex, shouldRunEffect]);
     // 플레이어 초기화
@@ -158,6 +155,7 @@ const Test: React.FC<PlayerProps> = ({ }) => {
                     console.log("플레이어 상태: PLAYING");
                     setIsPlaying(true);
                     updateCurrentTime();
+                    fetchSubtitles();
                     break;
                 case YT.PlayerState.ENDED:
                     console.log("플레이어 상태: ENDED");
@@ -201,8 +199,8 @@ const Test: React.FC<PlayerProps> = ({ }) => {
 
         if (!playerRef.current) {
             const player = new YT.Player(videoRef.current, {
-                height: '100',
-                width: '222',
+                height: '0',
+                width: '0',
                 videoId: playlist[currentVideoIndex].id,
                 events: {
                     'onReady': onPlayerReady,
@@ -246,6 +244,7 @@ const Test: React.FC<PlayerProps> = ({ }) => {
             window.onYouTubeIframeAPIReady = undefined;
         };
     }, []);
+    // 비디오 로드 후 초기화
     useEffect(() => {
         const initializePlayerIfMounted = () => {
             if (videoRef.current) {
@@ -614,6 +613,37 @@ const Test: React.FC<PlayerProps> = ({ }) => {
         const intervalId = setInterval(updateCurrentTime, 1000);
         return () => clearInterval(intervalId);
     }, []);
+    // 자막 가져오기
+    const fetchSubtitles = () => {
+        const videoId = playlist[currentVideoIndex].id;
+        const apiUrl = `https://www.googleapis.com/youtube/v3/captions?part=snippet&videoId=${videoId}&key=${ApiKey}`;
+        axios.get(apiUrl)
+            .then(response => {
+                const xmlData = response.data;
+                const subtitles = parseSubtitles(xmlData);
+                setSubtitles(subtitles);
+            })
+            .catch(error => {
+                console.error('Error fetching subtitles:', error);
+            });
+    };
+    // 자막 파싱
+    const parseSubtitles = (xmlData: string) => {
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(xmlData, "text/xml");
+        const textNodes = xmlDoc.getElementsByTagName("text");
+        const subtitles: string[] = [];
+        for (let i = 0; i < textNodes.length; i++) {
+            const textNode = textNodes[i];
+            const subtitle = textNode.textContent;
+
+            console.log('subtitle:', subtitle);
+            if (subtitle) {
+                subtitles.push(subtitle);
+            }
+        }
+        return subtitles;
+    };
 
     return (
         <div className='player'>
@@ -745,8 +775,7 @@ const Test: React.FC<PlayerProps> = ({ }) => {
                 <div className='video-title-list' style={{ display: listVisible ? 'block' : 'none' }}>
                     <ul>
                         {playlist.map((video, index) => (
-                            <li key={index} style={{ backgroundColor: index === currentVideoIndex ? '#CCCCCC' : 'transparent' }}>
-                                {/* <div className="divider">{"\|"}</div> */}
+                            <li key={index} style={{ backgroundColor: index === currentVideoIndex ? '#CCCCCC' : 'transparent' }}>           
                                 <div className='delete-button-container'>
                                     <div className='icon-buttons' onClick={() => handleDelete(index)}>
                                         <div className='icon delete-icon'></div>

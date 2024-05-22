@@ -1,4 +1,4 @@
-import Test from 'components/Player/Test';
+import Player from 'components/Player/Player';
 import { SIGNIN_PATH, SIGNUP_PATH } from 'constant';
 import Footer from 'layout/Footer';
 import Header from 'layout/Header';
@@ -12,7 +12,7 @@ export default function Container() {
     <>
         <Header />
         <Outlet />
-        <Test playlist={[]} />
+        <Player playlist={[]} />
         {(pathname !== SIGNIN_PATH() && pathname !== SIGNUP_PATH()) && <Footer />}
     </>
   )

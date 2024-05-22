@@ -53,7 +53,7 @@
 
 .player-container {
   width: 220px;
-  /* height: 350px; */
+  height: 350px;
   position: absolute;
   bottom: 30px;
   left: 0;
@@ -83,13 +83,13 @@
 }
 
 .handle {
-  width: 200px;
-  height: 50px;
+  width: 240px;
+  height: 70px;
   background-color: rgba(255, 255, 255, 0);
   position: absolute;
   z-index: 9999;
-  left: 150px;
-  top: 20px;
+  left: 140px;
+  top: 50px;
 }
 
 .thumbnail-container {
@@ -185,17 +185,6 @@
   color: black;
 }
 
-.progress-bar {
-  display: flex;
-  justify-content: center;
-  /* 가운데 정렬합니다. */
-  align-items: flex-start;
-  /* 위쪽 정렬합니다. */
-  width: 100%;
-  margin-top: 30px;
-  position: relative;
-}
-
 .volume-slider {
   width: calc(100% - 50%);
   appearance: none;
@@ -226,7 +215,6 @@
   width: calc(100% - 20px);
   position: absolute;
   top: -30px;
-  /* 슬라이더 위쪽에 위치시킵니다. */
 }
 
 .upload-button-container {
