@@ -30,12 +30,14 @@ declare global {
 }
 
 const Test: React.FC<PlayerProps> = ({ }) => {
-
-    const ApiKey = 'AIzaSyBRCweLseGcLizadDsECnpLhBRA2cG8PaM';
+    // AIzaSyDcwcdL4YrXLMfeAiAQ5sbjuJ5HTGvrz9Y
+    // AIzaSyBRCweLseGcLizadDsECnpLhBRA2cG8PaM
+    const ApiKey = 'AIzaSyDcwcdL4YrXLMfeAiAQ5sbjuJ5HTGvrz9Y';
     const videoRef = useRef<HTMLIFrameElement | null>(null);
     const playerRef = useRef<YT.Player | null>(null);
     const socketRef = useRef<WebSocket | null>(null);
 
+    const [shouldRunEffect, setShouldRunEffect] = useState(true);
     const [isInitialMount, setIsInitialMount] = useState(true);
     const [deletedIndex, setDeletedIndex] = useState<number | null>(null);
     const [randomEnabled, setRandomEnabled] = useState(false);
@@ -129,19 +131,14 @@ const Test: React.FC<PlayerProps> = ({ }) => {
             playerRef.current?.playVideo();
         }
     }, [isLoading, isPlaying]);
-    // currentTime 업데이트
+    // 비디오 변경 핸들러
     useEffect(() => {
-        if (currentTime >= duration) {
-            setCurrentTime(0);
+        console.log('shouldRunEffect:', shouldRunEffect)
+        if (shouldRunEffect && playerRef.current && playerRef.current.loadVideoById) {
+            playerRef.current.loadVideoById(playlist[currentVideoIndex].id);
+
         }
-        let updateInterval: NodeJS.Timeout;
-        if (!isLoading && isPlaying) {
-            updateInterval = setInterval(() => {
-                setCurrentTime((prevTime) => prevTime + 1);
-            }, 1000);
-        }
-        return () => clearInterval(updateInterval);
-    }, [isLoading, isPlaying]);
+    }, [currentVideoIndex, shouldRunEffect]);
     // 플레이어 초기화
     const initializePlayer = useCallback(() => {
         if (!videoRef.current) {
@@ -221,12 +218,6 @@ const Test: React.FC<PlayerProps> = ({ }) => {
         }
         console.log('플레이어가 초기화되었습니다.');
     }, [videoRef, playlist]);
-    // 비디오 변경 핸들러
-    useEffect(() => {
-        if (playerRef.current && playerRef.current.loadVideoById) {
-            playerRef.current.loadVideoById(playlist[currentVideoIndex].id);
-        }
-    }, [currentVideoIndex]);
     // API 스크립트 로드
     useEffect(() => {
         const existingScript = document.getElementById('youtube-iframe-api');
@@ -278,18 +269,6 @@ const Test: React.FC<PlayerProps> = ({ }) => {
         return () => {
             window.onYouTubeIframeAPIReady = undefined;
         };
-    }, []);
-    // 현재 시간 업데이트
-    const updateCurrentTime = () => {
-        if (playerRef.current && typeof playerRef.current.getCurrentTime === 'function') {
-            const currentTime = playerRef.current.getCurrentTime();
-            setCurrentTime(currentTime);
-        }
-    };
-    // 현재 시간 실시간 업데이트
-    useEffect(() => {
-        const intervalId = setInterval(updateCurrentTime, 1000);
-        return () => clearInterval(intervalId);
     }, []);
     // 음악 데이터 가져오기
     useEffect(() => {
@@ -355,6 +334,7 @@ const Test: React.FC<PlayerProps> = ({ }) => {
     };
     // 이전 비디오 재생
     const playPrevious = () => {
+        setShouldRunEffect(true);
         const previousIndex = currentVideoIndex === 0 ? playlist.length - 1 : currentVideoIndex - 1;
         const previousVideo = playlist[previousIndex];
         const videoId = previousVideo.id;
@@ -376,6 +356,7 @@ const Test: React.FC<PlayerProps> = ({ }) => {
     };
     // 다음 비디오 재생
     const playNext = useCallback(async (currentIndex?: number) => {
+        setShouldRunEffect(true);
         let nextIndex: number;
         if (randomEnabled) {
             nextIndex = Math.floor(Math.random() * playlist.length);
@@ -422,6 +403,129 @@ const Test: React.FC<PlayerProps> = ({ }) => {
         } else {
             console.log('videoRef.current가 null입니다. 요소가 마운트될 때까지 기다립니다.');
         }
+    };
+    // Video 제목 클릭 핸들러
+    const handleVideoTitleClick = (index: number) => {
+        setShouldRunEffect(true);
+        setCurrentVideoIndex(index);
+        setIsPlaying(true);
+        fetchVideoInfo(playlist[index].id)
+            .then(videoInfo => {
+                if (videoInfo) {
+                    setDuration(videoInfo.duration);
+                    setCurrentTime(0);
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching video info:', error);
+            });
+    };
+    // 노래 삭제 핸들러
+    const handleDelete = async (index: number) => {
+        try {
+            const videoUrl = playlist[index].videoUrl;
+            const videoId = extractYouTubeVideoId(videoUrl);
+            if (!videoId) return;
+            const deleteResult = await deleteMusicRequest(videoId);
+            if (deleteResult) {
+                alert('음악 삭제 성공');
+                const newPlaylist = [...playlist];
+                newPlaylist.splice(index, 1);
+                setPlaylist(newPlaylist);
+                setDeletedIndex(index);
+
+                if (isPlaying && currentVideoIndex === index) {
+                    playerRef.current?.stopVideo();
+                    setIsPlaying(false);
+                }
+
+                if (currentVideoIndex > index) {
+                    setShouldRunEffect(false);
+                    setCurrentVideoIndex(currentVideoIndex - 1);
+                }
+            } else {
+                console.error('음악 삭제 요청 실패');
+            }
+        } catch (error) {
+            console.error('음악 삭제 요청 실패:', error);
+        }
+    };
+    useEffect(() => {
+        if (isInitialMount) {
+            setIsInitialMount(false);
+        } else if (deletedIndex == currentVideoIndex) {
+            playNext(deletedIndex - 1);
+        }
+    }, [playlist, deletedIndex, playNext, isInitialMount, currentVideoIndex]);
+    // 랜덤 재생 토글
+    const toggleRandom = () => {
+        setRandomEnabled(prevState => !prevState);
+    };
+    // 음악 일괄 업로드
+    const handleBatchMusicUpload = async (urls: string[]) => {
+        try {
+            const videoIds = urls.map(url => extractYouTubeVideoId(url)).filter(Boolean) as string[];
+
+            const requests = videoIds.map(async (videoId) => {
+                const requestBody: PostMusicRequestDto = { videoUrl: videoId };
+                await postMusicRequest(requestBody);
+            });
+
+            await Promise.all(requests);
+
+            if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+                socketRef.current.send('updatePlaylist');
+            }
+
+            setVideoUrl('');
+            alert('음악 업로드 성공');
+        } catch (error) {
+            console.error('음악 업로드 실패:', error);
+        }
+    };
+    // 업로드 버튼 클릭 핸들러
+    const handleUploadButtonClick = () => {
+        const urls = [videoUrl];
+        handleBatchMusicUpload(urls);
+    };
+    // 마우스 업 핸들러
+    const handleMouseUp = () => {
+        setDragging(false);
+    };
+    // 키 다운 핸들러
+    const handleKeyDown = (event: { key: string; }) => {
+        if (event.key === 'Enter') {
+            const urls = videoUrl.split(',').map(url => url.trim());
+            handleBatchMusicUpload(urls);
+        }
+    };
+    // 슬라이더 변경 핸들러
+    const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const time = parseFloat(e.target.value);
+        setCurrentTime(time);
+        if (playerRef.current && typeof playerRef.current.seekTo === 'function') {
+            playerRef.current.seekTo(time, true);
+        }
+    };
+    // 슬라이더 마우스 업 핸들러
+    const handleSliderMouseUp = () => {
+        setDragging(false);
+    };
+    // 슬라이더 마우스 다운 핸들러
+    const handleSliderMouseDown = () => {
+        setDragging(true);
+    };
+    // 비디오 URL 변경 핸들러
+    const handleVideoUrlChange = (event: ChangeEvent<HTMLInputElement>) => {
+        setVideoUrl(event.target.value);
+    };
+    // 업로드 토글
+    const uploadToggleInputVisible = () => {
+        setInputVisible(!inputVisible);
+    };
+    // 리스트 토글
+    const listToggleInputVisible = () => {
+        setListVisible(!listVisible);
     };
     // 10초 전으로 이동
     const seekForward = () => {
@@ -485,128 +589,31 @@ const Test: React.FC<PlayerProps> = ({ }) => {
             setMousedownY(event.clientY);
         }
     };
-    // 마우스 업 핸들러
-    const handleMouseUp = () => {
-        setDragging(false);
-    };
-    // 키 다운 핸들러
-    const handleKeyDown = (event: { key: string; }) => {
-        if (event.key === 'Enter') {
-            const urls = videoUrl.split(',').map(url => url.trim());
-            handleBatchMusicUpload(urls);
+    // 현재 시간 업데이트
+    const updateCurrentTime = () => {
+        if (playerRef.current && typeof playerRef.current.getCurrentTime === 'function') {
+            const currentTime = playerRef.current.getCurrentTime();
+            setCurrentTime(currentTime);
         }
     };
-    // 슬라이더 변경 핸들러
-    const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const time = parseFloat(e.target.value);
-        setCurrentTime(time);
-        if (playerRef.current && typeof playerRef.current.seekTo === 'function') {
-            playerRef.current.seekTo(time, true);
-        }
-    };
-    // 슬라이더 마우스 업 핸들러
-    const handleSliderMouseUp = () => {
-        setDragging(false);
-    };
-    // 슬라이더 마우스 다운 핸들러
-    const handleSliderMouseDown = () => {
-        setDragging(true);
-    };
-    // 비디오 URL 변경 핸들러
-    const handleVideoUrlChange = (event: ChangeEvent<HTMLInputElement>) => {
-        setVideoUrl(event.target.value);
-    };
-    // 업로드 토글
-    const uploadToggleInputVisible = () => {
-        setInputVisible(!inputVisible);
-    };
-    // 리스트 토글
-    const listToggleInputVisible = () => {
-        setListVisible(!listVisible);
-    };
-    // Video 제목 클릭 핸들러
-    const handleVideoTitleClick = (index: number) => {
-        setCurrentVideoIndex(index);
-        setIsPlaying(true);
-        fetchVideoInfo(playlist[index].id)
-            .then(videoInfo => {
-                if (videoInfo) {
-                    setDuration(videoInfo.duration);
-                    setCurrentTime(0);
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching video info:', error);
-            });
-    };
-    // 노래 삭제 핸들러
-    const handleDelete = async (index: number) => {
-        try {
-            const videoUrl = playlist[index].videoUrl;
-            const videoId = extractYouTubeVideoId(videoUrl);
-            if (!videoId) return;
-            const deleteResult = await deleteMusicRequest(videoId);
-            if (deleteResult) {
-                alert('음악 삭제 성공');
-                const newPlaylist = [...playlist];
-                newPlaylist.splice(index, 1);
-                
-                console.log('newPlaylist:', newPlaylist);
-                setPlaylist(newPlaylist);
-                setDeletedIndex(index);
-                if (isPlaying && currentVideoIndex === index) {
-                    playerRef.current?.stopVideo();
-                    setIsPlaying(false);
-                }
-            } else {
-                console.error('음악 삭제 요청 실패');
-            }
-        } catch (error) {
-            console.error('음악 삭제 요청 실패:', error);
-        }
-    };
+    // currentTime 업데이트
     useEffect(() => {
-        if (isInitialMount) {
-            setIsInitialMount(false);
-        } else {
-            if (deletedIndex !== null && playerRef.current) {
-                playNext(deletedIndex - 1);
-            }
+        if (currentTime >= duration) {
+            setCurrentTime(0);
         }
-    }, [playlist, deletedIndex, playNext]);
-    // 랜덤 재생 토글
-    const toggleRandom = () => {
-        setRandomEnabled(prevState => !prevState);
-    };
-    // 음악 일괄 업로드
-    const handleBatchMusicUpload = async (urls: string[]) => {
-        try {
-            const videoIds = urls.map(url => extractYouTubeVideoId(url)).filter(Boolean) as string[];
-
-            const requests = videoIds.map(async (videoId) => {
-                const requestBody: PostMusicRequestDto = { videoUrl: videoId };
-                await postMusicRequest(requestBody);
-            });
-
-            await Promise.all(requests);
-
-            if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
-                socketRef.current.send('updatePlaylist');
-            }
-
-            setVideoUrl('');
-            alert('음악 업로드 성공');
-        } catch (error) {
-            console.error('음악 업로드 실패:', error);
+        let updateInterval: NodeJS.Timeout;
+        if (!isLoading && isPlaying) {
+            updateInterval = setInterval(() => {
+                setCurrentTime((prevTime) => prevTime + 1);
+            }, 1000);
         }
-    };
-    // 업로드 버튼 클릭 핸들러
-    const handleUploadButtonClick = () => {
-        const urls = [videoUrl];
-        handleBatchMusicUpload(urls);
-    };
-
-
+        return () => clearInterval(updateInterval);
+    }, [isLoading, isPlaying]);
+    // 현재 시간 실시간 업데이트
+    useEffect(() => {
+        const intervalId = setInterval(updateCurrentTime, 1000);
+        return () => clearInterval(intervalId);
+    }, []);
 
     return (
         <div className='player'>
