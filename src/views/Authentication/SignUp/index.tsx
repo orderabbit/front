@@ -45,7 +45,6 @@ const [EmailMessage, setEmailMessage] = useState<string>('');
 const [CertificationNumberMessage, setCertificationNumberMessage] = useState<string>('');
 
 const [isUserIdCheck, setUserIdCheck] = useState<boolean>(false);
-const [isEmailCheck, setEmailCheck] = useState<boolean>(false);
 const [isNicknameCheck, setNicknameCheck] = useState<boolean>(false);
 const [isCertificationCheck, setCertificationCheck] = useState<boolean>(false);
 
@@ -256,6 +255,7 @@ const signUpResponse = (responseBody: ResponseBody<SignUpResponseDto>) => {
     };
 
     const onSnsSignInButtonClickHandler = (type: 'kakao' | 'naver' | 'google') => {
+        
         console.log(SNS_SIGN_IN_URL(type));
         window.location.href = SNS_SIGN_IN_URL(type);
     };

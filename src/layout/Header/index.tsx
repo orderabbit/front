@@ -8,10 +8,12 @@ import { fileUploadRequest, patchBoardRequest, postBoardRequest } from 'apis';
 import { PatchBoardResponseDto, PostBoardResponseDto } from 'apis/response/board';
 import { PostBoardRequestDto, patchBoardRequestDto } from 'apis/request/board';
 import { ResponseDto } from 'apis/response';
+import { write } from 'fs';
 
 export default function Header() {
 
   const { loginUser, setLoginUser, resetLoginUser } = useLoginUserStore();
+  const { userId } = useParams();
   const { pathname } = useLocation();
   const [cookies, setCookie] = useCookies();
 
@@ -31,11 +33,11 @@ export default function Header() {
     setMainPage(isMainPage);
     const isSearchPage = pathname.startsWith(SEARCH_PATH(''));
     setSearchPage(isSearchPage);
-    const isDetailPage = pathname.startsWith(BOARD_PATH + '/' + DETAIL_PATH(''));
+    const isDetailPage = pathname.startsWith(BOARD_PATH() + '/' + DETAIL_PATH(''));
     setDetailPage(isDetailPage);
-    const isWritePage = pathname.startsWith(WRITE_PATH());
+    const isWritePage = pathname.startsWith(BOARD_PATH() + '/' + WRITE_PATH());
     setWritePage(isWritePage);
-    const isUpdatePage = pathname.startsWith(UPDATE_PATH(''));
+    const isUpdatePage = pathname.startsWith(BOARD_PATH() + '/' + UPDATE_PATH(''));
     setUpdatePage(isUpdatePage);
     const isUserPage = pathname.startsWith(USER_PATH(''));
     setUserPage(isUserPage);
@@ -110,22 +112,20 @@ export default function Header() {
       const { userId } = loginUser;
       navigator(USER_PATH(userId));
     };
-
     const onSignOutButtonClickHandler = () => {
       resetLoginUser();
       setCookie('accessToken', '', { path: MAIN_PATH(), expires: new Date() })
       navigator(MAIN_PATH());
     };
-
     const onSignInButtonClickHandler = () => {
       navigator(SIGNIN_PATH());
     };
 
     if (isLogin && isUserPage)
       return <div className='white-button' onClick={onSignOutButtonClickHandler}>{'로그아웃'}</div>
-    if (isLogin && isMainPage)
+    if (isLogin && isMainPage || isDetailPage)
       return <div className='white-button' onClick={onMyPageButtonClickHandler}>{'마이페이지'}</div>
-
+    if(!isLogin)
     return <div className='black-button' onClick={onSignInButtonClickHandler}>{'로그인'}</div>;
   };
 
@@ -208,7 +208,7 @@ export default function Header() {
         <div className='header-right-box'>
           {(isAuthPage || isMainPage || isSearchPage || isDetailPage) && <SearchButton />}
           {(isMainPage || isSearchPage || isDetailPage || isUserPage) && <MyPageButton />}
-          {!(isAuthPage || isMainPage || isUserPage || isDetailPage) && <UploadButton />}
+          {(isWritePage || isUpdatePage) && <UploadButton />}
         </div>
       </div>
     </div>

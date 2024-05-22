@@ -19,6 +19,7 @@ import { ResponseDto } from 'apis/response';
 import { User } from 'types/interface';
 import Player from 'components/Player/Player';
 import ASDF from 'components/Player/asdf';
+import OAuth from 'views/Authentication/OAuth';
 
 function App() {
   const {setLoginUser, resetLoginUser} = useLoginUserStore();
@@ -50,6 +51,7 @@ function App() {
         <Route path={MAIN_PATH()} element={<Main />} />
         <Route path={SIGNIN_PATH()} element={<SignIn />} />
         <Route path={SIGNUP_PATH()} element={<SignUp />} />
+        <Route path='auth/oauth-response/:token/:expirationTime' element={<OAuth/>} />
         <Route path={SEARCH_PATH(':searchWord')} element={<Search />} />
         <Route path={USER_PATH(':userId')} element={<UserP />} />
         <Route path={BOARD_PATH()}>

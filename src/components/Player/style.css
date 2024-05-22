@@ -84,7 +84,7 @@
 
 .handle {
   width: 240px;
-  height: 70px;
+  height: 100px;
   background-color: rgba(255, 255, 255, 0);
   position: absolute;
   z-index: 9999;
@@ -185,6 +185,17 @@
   color: black;
 }
 
+.progress-bar {
+  display: flex;
+  justify-content: center;
+  /* 가운데 정렬합니다. */
+  align-items: flex-start;
+  /* 위쪽 정렬합니다. */
+  width: 100%;
+  margin-top: 30px;
+  position: relative;
+}
+
 .volume-slider {
   width: calc(100% - 50%);
   appearance: none;
@@ -215,6 +226,7 @@
   width: calc(100% - 20px);
   position: absolute;
   top: -30px;
+  /* 슬라이더 위쪽에 위치시킵니다. */
 }
 
 .upload-button-container {
@@ -307,14 +319,6 @@
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-}
-
-.wdivider {
-    color: rgba(0, 0, 0, 0.4);
-
-    font-size: 16px;
-    font-weight: 500;
-    line-height: 140%;
 }
 
 .video-title-list span {

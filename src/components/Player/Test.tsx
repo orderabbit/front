@@ -646,7 +646,7 @@ const Test: React.FC<PlayerProps> = ({ }) => {
     };
 
     return (
-        <div className='player'>
+        // <div className='player'>
             <div className="player-wrapper" style={{ top: containerPosition.y + 'px', left: containerPosition.x + 'px' }}>
                 <div className="handle"
                     style={{
@@ -775,7 +775,7 @@ const Test: React.FC<PlayerProps> = ({ }) => {
                 <div className='video-title-list' style={{ display: listVisible ? 'block' : 'none' }}>
                     <ul>
                         {playlist.map((video, index) => (
-                            <li key={index} style={{ backgroundColor: index === currentVideoIndex ? '#CCCCCC' : 'transparent' }}>           
+                            <li key={index} style={{ backgroundColor: index === currentVideoIndex ? '#CCCCCC' : 'transparent' }}>
                                 <div className='delete-button-container'>
                                     <div className='icon-buttons' onClick={() => handleDelete(index)}>
                                         <div className='icon delete-icon'></div>
@@ -787,7 +787,7 @@ const Test: React.FC<PlayerProps> = ({ }) => {
                     </ul>
                 </div>
             </div>
-        </div>
+        // </div>
     );
 };
 // 시간 포맷팅

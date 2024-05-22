@@ -29,7 +29,7 @@ declare global {
     }
 }
 
-const Player: React.FC<PlayerProps> = ({ }) => {
+const Test: React.FC<PlayerProps> = ({ }) => {
     // AIzaSyDcwcdL4YrXLMfeAiAQ5sbjuJ5HTGvrz9Y
     // AIzaSyBRCweLseGcLizadDsECnpLhBRA2cG8PaM
     const ApiKey = 'AIzaSyDcwcdL4YrXLMfeAiAQ5sbjuJ5HTGvrz9Y';
@@ -776,7 +776,6 @@ const Player: React.FC<PlayerProps> = ({ }) => {
                     <ul>
                         {playlist.map((video, index) => (
                             <li key={index} style={{ backgroundColor: index === currentVideoIndex ? '#CCCCCC' : 'transparent' }}>
-                                {/* <div className="divider">{"\|"}</div> */}
                                 <div className='delete-button-container'>
                                     <div className='icon-buttons' onClick={() => handleDelete(index)}>
                                         <div className='icon delete-icon'></div>
@@ -806,4 +805,4 @@ const parseDuration = (iso8601Duration: string): number => {
     const seconds = match[3] ? parseInt(match[3].slice(0, -1)) : 0;
     return hours + minutes + seconds;
 };
-export default Player;
+export default Test;
