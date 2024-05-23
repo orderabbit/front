@@ -128,8 +128,8 @@
   line-height: 100%;
   white-space: nowrap;
   /* text-overflow: ellipsis; */
-  animation: text-animation linear infinite;
-  /* animation: slide-in linear infinite; */
+  /* animation: text-animation linear infinite; */
+  animation: slide-in linear infinite;
 }
 
 .animate-title {

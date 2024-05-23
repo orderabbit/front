@@ -32,7 +32,8 @@ declare global {
 const Test: React.FC<PlayerProps> = ({ }) => {
     // AIzaSyDcwcdL4YrXLMfeAiAQ5sbjuJ5HTGvrz9Y
     // AIzaSyBRCweLseGcLizadDsECnpLhBRA2cG8PaM
-    const ApiKey = 'AIzaSyBRCweLseGcLizadDsECnpLhBRA2cG8PaM';
+    // AIzaSyCUHFTIQuos35KXlJmcEt7ZZw7EmbXdrwA
+    const ApiKey = 'AIzaSyCUHFTIQuos35KXlJmcEt7ZZw7EmbXdrwA';
     const videoRef = useRef<HTMLIFrameElement | null>(null);
     const playerRef = useRef<YT.Player | null>(null);
     const socketRef = useRef<WebSocket | null>(null);
