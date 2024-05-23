@@ -29,14 +29,21 @@ declare global {
     }
 }
 
-const ASDF: React.FC<PlayerProps> = ({ }) => {
-
-    const ApiKey = 'AIzaSyBRCweLseGcLizadDsECnpLhBRA2cG8PaM';
+const Test: React.FC<PlayerProps> = ({ }) => {
+    // AIzaSyDcwcdL4YrXLMfeAiAQ5sbjuJ5HTGvrz9Y
+    // AIzaSyBRCweLseGcLizadDsECnpLhBRA2cG8PaM
+    // AIzaSyCUHFTIQuos35KXlJmcEt7ZZw7EmbXdrwA
+    const ApiKey = 'AIzaSyCUHFTIQuos35KXlJmcEt7ZZw7EmbXdrwA';
     const videoRef = useRef<HTMLIFrameElement | null>(null);
     const playerRef = useRef<YT.Player | null>(null);
     const socketRef = useRef<WebSocket | null>(null);
+    const titleRef = useRef<HTMLDivElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
 
-    const [urls, setUrls] = useState('');
+    const [subtitles, setSubtitles] = useState<string[]>([]);
+    const [shouldRunEffect, setShouldRunEffect] = useState(true);
+    const [isInitialMount, setIsInitialMount] = useState(true);
+    const [deletedIndex, setDeletedIndex] = useState<number | null>(null);
     const [randomEnabled, setRandomEnabled] = useState(false);
     const [isRepeatEnabled, setIsRepeatEnabled] = useState(false);
     const isRepeatEnabledRef = useRef(isRepeatEnabled);
@@ -56,7 +63,7 @@ const ASDF: React.FC<PlayerProps> = ({ }) => {
     const [mousedownX, setMousedownX] = useState(0);
     const [mousedownY, setMousedownY] = useState(0);
 
-
+    // 소켓 연결
     useEffect(() => {
         const socket = new WebSocket('ws://localhost:4040/playlistUpdate');
 
@@ -66,27 +73,32 @@ const ASDF: React.FC<PlayerProps> = ({ }) => {
         };
 
         socket.onmessage = async (event) => {
-            const url = event.data;
-            const videoId = extractYouTubeVideoId(url);
-            if (videoId) {
-                const videoInfo = await fetchVideoInfo(videoId);
-                if (videoInfo) {
-                    setPlaylist(prevPlaylist => [...prevPlaylist, videoInfo]);
+            try {
+                const urls = JSON.parse(event.data); // JSON 파싱
+                if (Array.isArray(urls)) {
+                    const videoInfos = await Promise.all(
+                        urls.map(async (url) => {
+                            const videoId = extractYouTubeVideoId(url);
+                            if (videoId) {
+                                return await fetchVideoInfo(videoId);
+                            }
+                            return null;
+                        })
+                    );
+                    const validVideoInfos = videoInfos.filter(info => info !== null) as Video[];
+                    setPlaylist((prevPlaylist) => [...prevPlaylist, ...validVideoInfos]);
                 }
+            } catch (error) {
+                console.error('Error processing websocket message:', error);
             }
-            console.log('웹 소켓 메시지를 받았습니다:', event.data);
         };
-
         socket.onclose = (event) => {
             console.log('웹 소켓 연결이 닫혔습니다.', event.code, event.reason);
         };
-
         socket.onerror = (error) => {
             console.error('웹 소켓 에러:', error);
         };
-
         socketRef.current = socket;
-
         return () => {
             socket.close();
         };
@@ -121,19 +133,12 @@ const ASDF: React.FC<PlayerProps> = ({ }) => {
             playerRef.current?.playVideo();
         }
     }, [isLoading, isPlaying]);
-    // currentTime 업데이트
+    // 비디오 변경 핸들러
     useEffect(() => {
-        if (currentTime >= duration) {
-            setCurrentTime(0);
+        if (shouldRunEffect && playerRef.current && playerRef.current.loadVideoById) {
+            playerRef.current.loadVideoById(playlist[currentVideoIndex].id);
         }
-        let updateInterval: NodeJS.Timeout;
-        if (!isLoading && isPlaying) {
-            updateInterval = setInterval(() => {
-                setCurrentTime((prevTime) => prevTime + 1);
-            }, 1000);
-        }
-        return () => clearInterval(updateInterval);
-    }, [isLoading, isPlaying]);
+    }, [currentVideoIndex, shouldRunEffect]);
     // 플레이어 초기화
     const initializePlayer = useCallback(() => {
         if (!videoRef.current) {
@@ -153,6 +158,7 @@ const ASDF: React.FC<PlayerProps> = ({ }) => {
                     console.log("플레이어 상태: PLAYING");
                     setIsPlaying(true);
                     updateCurrentTime();
+                    fetchSubtitles();
                     break;
                 case YT.PlayerState.ENDED:
                     console.log("플레이어 상태: ENDED");
@@ -165,7 +171,7 @@ const ASDF: React.FC<PlayerProps> = ({ }) => {
                         const currentIndex = playlist.findIndex(video => video.id === currentVideoId);
                         if (currentIndex !== -1) {
                             setCurrentVideoIndex(currentIndex);
-                            setTimeout(() => playNext(playlist, currentIndex), 0);
+                            setTimeout(() => playNext(currentIndex), 0);
                         } else {
                             console.error("현재 재생 중인 비디오를 찾을 수 없습니다.");
                         }
@@ -196,8 +202,8 @@ const ASDF: React.FC<PlayerProps> = ({ }) => {
 
         if (!playerRef.current) {
             const player = new YT.Player(videoRef.current, {
-                height: '100',
-                width: '222',
+                height: '0',
+                width: '0',
                 videoId: playlist[currentVideoIndex].id,
                 events: {
                     'onReady': onPlayerReady,
@@ -211,13 +217,8 @@ const ASDF: React.FC<PlayerProps> = ({ }) => {
             });
             playerRef.current = player;
         }
+        console.log('플레이어가 초기화되었습니다.');
     }, [videoRef, playlist]);
-    // 비디오 변경 핸들러
-    useEffect(() => {
-        if (playerRef.current && playerRef.current.loadVideoById) {
-            playerRef.current.loadVideoById(playlist[currentVideoIndex].id);
-        }
-    }, [currentVideoIndex]);
     // API 스크립트 로드
     useEffect(() => {
         const existingScript = document.getElementById('youtube-iframe-api');
@@ -246,6 +247,7 @@ const ASDF: React.FC<PlayerProps> = ({ }) => {
             window.onYouTubeIframeAPIReady = undefined;
         };
     }, []);
+    // 비디오 로드 후 초기화
     useEffect(() => {
         const initializePlayerIfMounted = () => {
             if (videoRef.current) {
@@ -269,18 +271,6 @@ const ASDF: React.FC<PlayerProps> = ({ }) => {
         return () => {
             window.onYouTubeIframeAPIReady = undefined;
         };
-    }, []);
-    // 현재 시간 업데이트
-    const updateCurrentTime = () => {
-        if (playerRef.current && typeof playerRef.current.getCurrentTime === 'function') {
-            const currentTime = playerRef.current.getCurrentTime();
-            setCurrentTime(currentTime);
-        }
-    };
-    // 현재 시간 실시간 업데이트
-    useEffect(() => {
-        const intervalId = setInterval(updateCurrentTime, 1000);
-        return () => clearInterval(intervalId);
     }, []);
     // 음악 데이터 가져오기
     useEffect(() => {
@@ -346,6 +336,7 @@ const ASDF: React.FC<PlayerProps> = ({ }) => {
     };
     // 이전 비디오 재생
     const playPrevious = () => {
+        setShouldRunEffect(true);
         const previousIndex = currentVideoIndex === 0 ? playlist.length - 1 : currentVideoIndex - 1;
         const previousVideo = playlist[previousIndex];
         const videoId = previousVideo.id;
@@ -366,18 +357,20 @@ const ASDF: React.FC<PlayerProps> = ({ }) => {
         });
     };
     // 다음 비디오 재생
-    const playNext = useCallback(async (newPlayList: Video[], currentIndex?: number) => {
+    const playNext = useCallback(async (currentIndex?: number) => {
+        setShouldRunEffect(true);
         let nextIndex: number;
         if (randomEnabled) {
-            nextIndex = Math.floor(Math.random() * newPlayList.length);
+            nextIndex = Math.floor(Math.random() * playlist.length);
         } else {
             nextIndex = (typeof currentIndex !== 'undefined' ? currentIndex + 1 : currentVideoIndex + 1) % playlist.length;
         }
-        const nextVideo = newPlayList[nextIndex];
+        if (playlist.length === 0) return;
+        const nextVideo = playlist[nextIndex];
         const videoId = nextVideo.id;
         try {
             const videoInfo = await fetchVideoInfo(videoId);
-
+            console.log('playerRef.current:', playerRef.current);
             if (videoInfo && videoRef.current && playerRef.current) {
                 setCurrentVideoIndex(nextIndex);
                 setDuration(videoInfo.duration);
@@ -412,6 +405,129 @@ const ASDF: React.FC<PlayerProps> = ({ }) => {
         } else {
             console.log('videoRef.current가 null입니다. 요소가 마운트될 때까지 기다립니다.');
         }
+    };
+    // Video 제목 클릭 핸들러
+    const handleVideoTitleClick = (index: number) => {
+        setShouldRunEffect(true);
+        setCurrentVideoIndex(index);
+        setIsPlaying(true);
+        fetchVideoInfo(playlist[index].id)
+            .then(videoInfo => {
+                if (videoInfo) {
+                    setDuration(videoInfo.duration);
+                    setCurrentTime(0);
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching video info:', error);
+            });
+    };
+    // 노래 삭제 핸들러
+    const handleDelete = async (index: number) => {
+        try {
+            const videoUrl = playlist[index].videoUrl;
+            const videoId = extractYouTubeVideoId(videoUrl);
+            if (!videoId) return;
+            const deleteResult = await deleteMusicRequest(videoId);
+            if (deleteResult) {
+                alert('음악 삭제 성공');
+                const newPlaylist = [...playlist];
+                newPlaylist.splice(index, 1);
+                setPlaylist(newPlaylist);
+                setDeletedIndex(index);
+
+                if (isPlaying && currentVideoIndex === index) {
+                    playerRef.current?.stopVideo();
+                    setIsPlaying(false);
+                }
+
+                if (currentVideoIndex > index) {
+                    setShouldRunEffect(false);
+                    setCurrentVideoIndex(currentVideoIndex - 1);
+                }
+            } else {
+                console.error('음악 삭제 요청 실패');
+            }
+        } catch (error) {
+            console.error('음악 삭제 요청 실패:', error);
+        }
+    };
+    useEffect(() => {
+        if (isInitialMount) {
+            setIsInitialMount(false);
+        } else if (deletedIndex == currentVideoIndex) {
+            playNext(deletedIndex - 1);
+        }
+    }, [playlist, deletedIndex, playNext, isInitialMount, currentVideoIndex]);
+    // 랜덤 재생 토글
+    const toggleRandom = () => {
+        setRandomEnabled(prevState => !prevState);
+    };
+    // 음악 일괄 업로드
+    const handleBatchMusicUpload = async (urls: string[]) => {
+        try {
+            const videoIds = urls.map(url => extractYouTubeVideoId(url)).filter(Boolean) as string[];
+
+            const requests = videoIds.map(async (videoId) => {
+                const requestBody: PostMusicRequestDto = { videoUrl: videoId };
+                await postMusicRequest(requestBody);
+            });
+
+            await Promise.all(requests);
+
+            if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+                socketRef.current.send('updatePlaylist');
+            }
+
+            setVideoUrl('');
+            alert('음악 업로드 성공');
+        } catch (error) {
+            console.error('음악 업로드 실패:', error);
+        }
+    };
+    // 업로드 버튼 클릭 핸들러
+    const handleUploadButtonClick = () => {
+        const urls = [videoUrl];
+        handleBatchMusicUpload(urls);
+    };
+    // 마우스 업 핸들러
+    const handleMouseUp = () => {
+        setDragging(false);
+    };
+    // 키 다운 핸들러
+    const handleKeyDown = (event: { key: string; }) => {
+        if (event.key === 'Enter') {
+            const urls = videoUrl.split(',').map(url => url.trim());
+            handleBatchMusicUpload(urls);
+        }
+    };
+    // 슬라이더 변경 핸들러
+    const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const time = parseFloat(e.target.value);
+        setCurrentTime(time);
+        if (playerRef.current && typeof playerRef.current.seekTo === 'function') {
+            playerRef.current.seekTo(time, true);
+        }
+    };
+    // 슬라이더 마우스 업 핸들러
+    const handleSliderMouseUp = () => {
+        setDragging(false);
+    };
+    // 슬라이더 마우스 다운 핸들러
+    const handleSliderMouseDown = () => {
+        setDragging(true);
+    };
+    // 비디오 URL 변경 핸들러
+    const handleVideoUrlChange = (event: ChangeEvent<HTMLInputElement>) => {
+        setVideoUrl(event.target.value);
+    };
+    // 업로드 토글
+    const uploadToggleInputVisible = () => {
+        setInputVisible(!inputVisible);
+    };
+    // 리스트 토글
+    const listToggleInputVisible = () => {
+        setListVisible(!listVisible);
     };
     // 10초 전으로 이동
     const seekForward = () => {
@@ -475,121 +591,114 @@ const ASDF: React.FC<PlayerProps> = ({ }) => {
             setMousedownY(event.clientY);
         }
     };
-    // 마우스 업 핸들러
-    const handleMouseUp = () => {
-        setDragging(false);
-    };
-    // 키 다운 핸들러
-    const handleKeyDown = (event: { key: string; }) => {
-        if (event.key === 'Enter') {
-            const urls = videoUrl.split(',').map(url => url.trim());
-            handleBatchMusicUpload(urls);
+    // 현재 시간 업데이트
+    const updateCurrentTime = () => {
+        if (playerRef.current && typeof playerRef.current.getCurrentTime === 'function') {
+            const currentTime = playerRef.current.getCurrentTime();
+            setCurrentTime(currentTime);
         }
     };
-    // 슬라이더 변경 핸들러
-    const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const time = parseFloat(e.target.value);
-        setCurrentTime(time);
-        if (playerRef.current && typeof playerRef.current.seekTo === 'function') {
-            playerRef.current.seekTo(time, true);
+    // currentTime 업데이트
+    useEffect(() => {
+        if (currentTime >= duration) {
+            setCurrentTime(0);
         }
-    };
-    // 슬라이더 마우스 업 핸들러
-    const handleSliderMouseUp = () => {
-        setDragging(false);
-    };
-    // 슬라이더 마우스 다운 핸들러
-    const handleSliderMouseDown = () => {
-        setDragging(true);
-    };
-    // 비디오 URL 변경 핸들러
-    const handleVideoUrlChange = (event: ChangeEvent<HTMLInputElement>) => {
-        setVideoUrl(event.target.value);
-    };
-    // 업로드 토글
-    const uploadToggleInputVisible = () => {
-        setInputVisible(!inputVisible);
-    };
-    // 리스트 토글
-    const listToggleInputVisible = () => {
-        setListVisible(!listVisible);
-    };
-    // Video 제목 클릭 핸들러
-    const handleVideoTitleClick = (index: number) => {
-        setCurrentVideoIndex(index);
-        setIsPlaying(true);
-        fetchVideoInfo(playlist[index].id)
-            .then(videoInfo => {
-                if (videoInfo) {
-                    setDuration(videoInfo.duration);
-                    setCurrentTime(0);
-                }
+        let updateInterval: NodeJS.Timeout;
+        if (!isLoading && isPlaying) {
+            updateInterval = setInterval(() => {
+                setCurrentTime((prevTime) => prevTime + 1);
+            }, 1000);
+        }
+        return () => clearInterval(updateInterval);
+    }, [isLoading, isPlaying]);
+    // 현재 시간 실시간 업데이트
+    useEffect(() => {
+        const intervalId = setInterval(updateCurrentTime, 1000);
+        return () => clearInterval(intervalId);
+    }, []);
+    // 자막 가져오기
+    const fetchSubtitles = () => {
+        const videoId = playlist[currentVideoIndex].id;
+        const apiUrl = `https://www.googleapis.com/youtube/v3/captions?part=snippet&videoId=${videoId}&key=${ApiKey}`;
+        axios.get(apiUrl)
+            .then(response => {
+                const xmlData = response.data;
+                const subtitles = parseSubtitles(xmlData);
+                setSubtitles(subtitles);
             })
             .catch(error => {
-                console.error('Error fetching video info:', error);
+                console.error('Error fetching subtitles:', error);
             });
     };
-    // 노래 삭제 핸들러
-    const handleDelete = async (index: number) => {
-        try {
-            const videoUrl = playlist[index].videoUrl;
-            const videoId = extractYouTubeVideoId(videoUrl);
-            if (!videoId) return;
-            const deleteResult = await deleteMusicRequest(videoId);
-            if (deleteResult) {
-                alert('음악 삭제 성공');
-                const newPlaylist = [...playlist];
-                newPlaylist.splice(index, 1);
-                
-                console.log('newPlaylist:', newPlaylist);
-                setPlaylist(newPlaylist);
-                if (isPlaying && currentVideoIndex === index) {
-                    playerRef.current?.stopVideo();
-                    setIsPlaying(false);
-                    setTimeout(() => {
-                        playNext(newPlaylist, currentVideoIndex - 1);
-                    }, 0);
-                }
+    // 자막 파싱
+    const parseSubtitles = (xmlData: string) => {
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(xmlData, "text/xml");
+        const textNodes = xmlDoc.getElementsByTagName("text");
+        const subtitles: string[] = [];
+        for (let i = 0; i < textNodes.length; i++) {
+            const textNode = textNodes[i];
+            const subtitle = textNode.textContent;
+
+            console.log('subtitle:', subtitle);
+            if (subtitle) {
+                subtitles.push(subtitle);
+            }
+        }
+        return subtitles;
+    };
+
+    // 타이틀 애니메이션
+    useEffect(() => {
+        if (titleRef.current && containerRef.current) {
+            const titleWidth = playlist[currentVideoIndex].title.length * 10;
+            const containerWidth = containerRef.current.offsetWidth;
+
+            console.log('titleWidth:', titleWidth);
+            console.log('containerWidth:', containerWidth);
+            if (titleWidth > containerWidth) {
+                titleRef.current.classList.add('animate-title');
             } else {
-                console.error('음악 삭제 요청 실패');
+                titleRef.current.classList.remove('animate-title');
             }
-        } catch (error) {
-            console.error('음악 삭제 요청 실패:', error);
         }
-    };
-    // 랜덤 재생 토글
-    const toggleRandom = () => {
-        setRandomEnabled(prevState => !prevState);
-    };
-    // 음악 일괄 업로드
-    const handleBatchMusicUpload = async (urls: string[]) => {
-        try {
-            const videoIds = urls.map(url => extractYouTubeVideoId(url)).filter(Boolean) as string[];
-
-            const requests = videoIds.map(async (videoId) => {
-                const requestBody: PostMusicRequestDto = { videoUrl: videoId };
-                await postMusicRequest(requestBody);
-            });
-
-            await Promise.all(requests);
-
-            if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
-                socketRef.current.send('updatePlaylist');
-            }
-
-            setVideoUrl('');
-            alert('음악 업로드 성공');
-        } catch (error) {
-            console.error('음악 업로드 실패:', error);
-        }
-    };
-    // 업로드 버튼 클릭 핸들러
-    const handleUploadButtonClick = () => {
-        const urls = [videoUrl];
-        handleBatchMusicUpload(urls);
-    };
+    }, [currentVideoIndex]);
 
 
+
+
+
+    useEffect(() => {
+        const animateText = () => {
+            const container = containerRef.current;
+            const text = titleRef.current;
+            if (!container || !text) return;
+
+            let start = Date.now();
+            const containerWidth = container.offsetWidth;
+            const textWidth = text.offsetWidth;
+            let xPos = containerWidth;
+
+            const step = () => {
+                const elapsed = Date.now() - start;
+                const speed = 100; // 이동 속도 (픽셀/초)
+                xPos = containerWidth - (elapsed / 1000) * speed;
+
+                if (xPos + textWidth < 0) {
+                    start = Date.now(); // 애니메이션을 다시 시작합니다.
+                    xPos = containerWidth;
+                }
+
+                text.style.transform = `translateX(${xPos}px)`;
+                console.log(`xPos: ${xPos}, containerWidth: ${containerWidth}, textWidth: ${textWidth}`);
+                requestAnimationFrame(step);
+            };
+
+            step();
+        };
+
+        animateText();
+    }, [currentVideoIndex]);
 
     return (
         <div className='player'>
@@ -605,7 +714,7 @@ const ASDF: React.FC<PlayerProps> = ({ }) => {
                     onMouseUp={handleMouseUp} />
                 <div className="player-container">
                     {playlist[currentVideoIndex] && (
-                        <div className="video-info">
+                        <div className="video-info" ref={containerRef}>
                             <div ref={videoRef}>
                                 <iframe
                                     src={`https://www.youtube.com/embed/${playlist[currentVideoIndex].id}?enablejsapi=0&origin=${encodeURIComponent(window.location.origin)}`}
@@ -616,7 +725,8 @@ const ASDF: React.FC<PlayerProps> = ({ }) => {
                             </div>
                             <img className='thumbnail' src={`https://img.youtube.com/vi/${playlist[currentVideoIndex].id}/default.jpg`} alt="Video Thumbnail" />
                             <div className="info-details">
-                                <div className='info-title'>{playlist[currentVideoIndex].title}</div>
+                                {/* <div>{playlist[currentVideoIndex].title.length * 0.2}</div> */}
+                                <div ref={titleRef} className='info-title' >{playlist[currentVideoIndex].title}</div>
                                 <p className='info-channelTitle'>{`artist: ${playlist[currentVideoIndex].channelTitle}`}</p>
                             </div>
                         </div>
@@ -653,7 +763,7 @@ const ASDF: React.FC<PlayerProps> = ({ }) => {
                                 )}
                             </div>
                         )}
-                        <div className='icon-button' onClick={() => playNext(playlist, currentVideoIndex)}>
+                        <div className='icon-button' onClick={() => playNext(currentVideoIndex)}>
                             <div className='icon next-icon'></div>
                         </div>
                         <div className='icon-button' onClick={seekForward}>
@@ -721,8 +831,7 @@ const ASDF: React.FC<PlayerProps> = ({ }) => {
                 <div className='video-title-list' style={{ display: listVisible ? 'block' : 'none' }}>
                     <ul>
                         {playlist.map((video, index) => (
-                            <li key={index} style={{ backgroundColor: index === currentVideoIndex ? '#CCCCCC' : 'transparent' }}>
-                                {/* <div className="divider">{"\|"}</div> */}
+                            <li key={index} style={{ backgroundColor: index === currentVideoIndex ? '#DDDDDD' : 'transparent' }}>
                                 <div className='delete-button-container'>
                                     <div className='icon-buttons' onClick={() => handleDelete(index)}>
                                         <div className='icon delete-icon'></div>
@@ -752,4 +861,4 @@ const parseDuration = (iso8601Duration: string): number => {
     const seconds = match[3] ? parseInt(match[3].slice(0, -1)) : 0;
     return hours + minutes + seconds;
 };
-export default ASDF;
+export default Test;

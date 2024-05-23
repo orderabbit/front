@@ -647,7 +647,7 @@ const Test: React.FC<PlayerProps> = ({ }) => {
         }
         return subtitles;
     };
-
+    // 타이틀 애니메이션
     useEffect(() => {
         if (titleRef.current && containerRef.current) {
             const titleWidth = playlist[currentVideoIndex].title.length * 10;
@@ -661,6 +661,33 @@ const Test: React.FC<PlayerProps> = ({ }) => {
                 titleRef.current.classList.remove('animate-title');
             }
         }
+    }, [currentVideoIndex]);
+    // 텍스트 애니메이션
+    useEffect(() => {
+        const animateText = () => {
+            const container = containerRef.current;
+            const text = titleRef.current;
+            if (!container || !text) return;
+            let start = Date.now();
+            const containerWidth = container.offsetWidth;
+            const textWidth = text.offsetWidth;
+            let xPos = containerWidth;
+            const step = () => {
+                const elapsed = Date.now() - start;
+                const speed = 100; // 이동 속도 (픽셀/초)
+                xPos = containerWidth - (elapsed / 1000) * speed;
+                if (xPos + textWidth < 0) {
+                    start = Date.now();
+                    xPos = containerWidth;
+                }
+                text.style.transform = `translateX(${xPos}px)`;
+                console.log(`xPos: ${xPos}, containerWidth: ${containerWidth}, textWidth: ${textWidth}`);
+                requestAnimationFrame(step);
+            };
+            step();
+        };
+
+        animateText();
     }, [currentVideoIndex]);
 
     return (
@@ -686,13 +713,10 @@ const Test: React.FC<PlayerProps> = ({ }) => {
                                     style={{ display: isPlaying ? 'none' : 'none' }}
                                 ></iframe>
                             </div>
-                            <img className='thumbnail' src={`https://img.youtube.com/vi/${playlist[currentVideoIndex].id}/default.jpg`} alt="Video Thumbnail" />
+                            <img className="thumbnail" src={`https://img.youtube.com/vi/${playlist[currentVideoIndex].id}/default.jpg`} alt="Video Thumbnail" />
                             <div className="info-details">
-                                <div>{300 / playlist[currentVideoIndex].title.length * 1}</div>
-                                {/* <div ref={titleRef} className='info-title' style={{ animationDuration: `${playlist[currentVideoIndex].title.length * 0.1}s` }}>{playlist[currentVideoIndex].title}</div> */}
-                                <div ref={titleRef} className='info-title' style={{ animationDuration: `${300 / playlist[currentVideoIndex].title.length * 1}s`}}>{playlist[currentVideoIndex].title}</div>
-                                {/* <div ref={titleRef} className='info-title animate-title' >{playlist[currentVideoIndex].title}</div> */}
-                                <p className='info-channelTitle'>{`artist: ${playlist[currentVideoIndex].channelTitle}`}</p>
+                                <div ref={titleRef} className="info-title">{playlist[currentVideoIndex].title}</div>
+                                <p className="info-channelTitle">{`artist: ${playlist[currentVideoIndex].channelTitle}`}</p>
                             </div>
                         </div>
                     )}
