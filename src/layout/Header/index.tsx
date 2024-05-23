@@ -127,6 +127,7 @@ export default function Header() {
       return <div className='white-button' onClick={onMyPageButtonClickHandler}>{'마이페이지'}</div>
     if(!isLogin)
     return <div className='black-button' onClick={onSignInButtonClickHandler}>{'로그인'}</div>;
+    return null;
   };
 
   const UploadButton = () => {

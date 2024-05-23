@@ -32,10 +32,12 @@ declare global {
 const Test: React.FC<PlayerProps> = ({ }) => {
     // AIzaSyDcwcdL4YrXLMfeAiAQ5sbjuJ5HTGvrz9Y
     // AIzaSyBRCweLseGcLizadDsECnpLhBRA2cG8PaM
-    const ApiKey = 'AIzaSyDcwcdL4YrXLMfeAiAQ5sbjuJ5HTGvrz9Y';
+    const ApiKey = 'AIzaSyBRCweLseGcLizadDsECnpLhBRA2cG8PaM';
     const videoRef = useRef<HTMLIFrameElement | null>(null);
     const playerRef = useRef<YT.Player | null>(null);
     const socketRef = useRef<WebSocket | null>(null);
+    const titleRef = useRef<HTMLDivElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
 
     const [subtitles, setSubtitles] = useState<string[]>([]);
     const [shouldRunEffect, setShouldRunEffect] = useState(true);
@@ -60,7 +62,7 @@ const Test: React.FC<PlayerProps> = ({ }) => {
     const [mousedownX, setMousedownX] = useState(0);
     const [mousedownY, setMousedownY] = useState(0);
 
-
+    // 소켓 연결
     useEffect(() => {
         const socket = new WebSocket('ws://localhost:4040/playlistUpdate');
 
@@ -645,8 +647,23 @@ const Test: React.FC<PlayerProps> = ({ }) => {
         return subtitles;
     };
 
+    useEffect(() => {
+        if (titleRef.current && containerRef.current) {
+            const titleWidth = playlist[currentVideoIndex].title.length * 10;
+            const containerWidth = containerRef.current.offsetWidth;
+
+            console.log('titleWidth:', titleWidth);
+            console.log('containerWidth:', containerWidth);
+            if (titleWidth > containerWidth) {
+                titleRef.current.classList.add('animate-title');
+            } else {
+                titleRef.current.classList.remove('animate-title');
+            }
+        }
+    }, [currentVideoIndex]);
+
     return (
-        // <div className='player'>
+        <div className='player'>
             <div className="player-wrapper" style={{ top: containerPosition.y + 'px', left: containerPosition.x + 'px' }}>
                 <div className="handle"
                     style={{
@@ -659,7 +676,7 @@ const Test: React.FC<PlayerProps> = ({ }) => {
                     onMouseUp={handleMouseUp} />
                 <div className="player-container">
                     {playlist[currentVideoIndex] && (
-                        <div className="video-info">
+                        <div className="video-info" ref={containerRef}>
                             <div ref={videoRef}>
                                 <iframe
                                     src={`https://www.youtube.com/embed/${playlist[currentVideoIndex].id}?enablejsapi=0&origin=${encodeURIComponent(window.location.origin)}`}
@@ -670,7 +687,10 @@ const Test: React.FC<PlayerProps> = ({ }) => {
                             </div>
                             <img className='thumbnail' src={`https://img.youtube.com/vi/${playlist[currentVideoIndex].id}/default.jpg`} alt="Video Thumbnail" />
                             <div className="info-details">
-                                <div className='info-title'>{playlist[currentVideoIndex].title}</div>
+                                <div>{300 / playlist[currentVideoIndex].title.length * 1}</div>
+                                {/* <div ref={titleRef} className='info-title' style={{ animationDuration: `${playlist[currentVideoIndex].title.length * 0.1}s` }}>{playlist[currentVideoIndex].title}</div> */}
+                                <div ref={titleRef} className='info-title' style={{ animationDuration: `${300 / playlist[currentVideoIndex].title.length * 1}s`}}>{playlist[currentVideoIndex].title}</div>
+                                {/* <div ref={titleRef} className='info-title animate-title' >{playlist[currentVideoIndex].title}</div> */}
                                 <p className='info-channelTitle'>{`artist: ${playlist[currentVideoIndex].channelTitle}`}</p>
                             </div>
                         </div>
@@ -775,7 +795,7 @@ const Test: React.FC<PlayerProps> = ({ }) => {
                 <div className='video-title-list' style={{ display: listVisible ? 'block' : 'none' }}>
                     <ul>
                         {playlist.map((video, index) => (
-                            <li key={index} style={{ backgroundColor: index === currentVideoIndex ? '#CCCCCC' : 'transparent' }}>
+                            <li key={index} style={{ backgroundColor: index === currentVideoIndex ? '#DDDDDD' : 'transparent' }}>
                                 <div className='delete-button-container'>
                                     <div className='icon-buttons' onClick={() => handleDelete(index)}>
                                         <div className='icon delete-icon'></div>
@@ -787,7 +807,7 @@ const Test: React.FC<PlayerProps> = ({ }) => {
                     </ul>
                 </div>
             </div>
-        // </div>
+        </div>
     );
 };
 // 시간 포맷팅

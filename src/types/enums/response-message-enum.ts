@@ -14,7 +14,8 @@ enum ResponseMessage{
     DUPLICATE_NICKNAME = 'Duplicate nickname',
     NOT_EXISTED_USER = "Not Existed User",
     NOT_EXISTED_BOARD = 'Not Existed Board',
-
+    
+    WRONG_PASSWORD = "Wrong Password",
     DO_NOT_HAVE_PERMISSION = "Do Not Have Permission"
 };
 

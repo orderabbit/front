@@ -37,7 +37,7 @@ export default function Main() {
     return (
       <div id='main-top-wrapper'>
         <div className='main-top-container'>
-          <div className='main-top-title'>{'???'}</div>
+          <div className='main-top-title'>{'/'}</div>
           <div className='main-top-contents-box'>
             <div className='main-top-contents-title'>{'주간 TOP 3'}</div>
             <div className='main-top-contents'>

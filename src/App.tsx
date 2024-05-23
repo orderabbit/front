@@ -1,4 +1,4 @@
-import { DETAIL_PATH, MAIN_PATH, BOARD_PATH, SEARCH_PATH, SIGNIN_PATH, SIGNUP_PATH, UPDATE_PATH, USER_PATH, WRITE_PATH, MUSIC_PATH } from 'constant';
+import { DETAIL_PATH, MAIN_PATH, BOARD_PATH, SEARCH_PATH, SIGNIN_PATH, SIGNUP_PATH, UPDATE_PATH, USER_PATH, WRITE_PATH, MUSIC_PATH, PASSWORD_PATH } from 'constant';
 import Container from 'layout/Container';
 import { Route, Routes } from 'react-router-dom';
 import SignIn from 'views/Authentication/SignIn';
@@ -20,6 +20,7 @@ import { User } from 'types/interface';
 import Player from 'components/Player/Player';
 import ASDF from 'components/Player/asdf';
 import OAuth from 'views/Authentication/OAuth';
+import ChangePasswordForm from 'views/User/PasswordChange';
 
 function App() {
   const {setLoginUser, resetLoginUser} = useLoginUserStore();
@@ -48,6 +49,7 @@ function App() {
   return (
     <Routes>
       <Route element={<Container />}>
+        <Route path={PASSWORD_PATH()} element={<ChangePasswordForm accessToken={''} />} />
         <Route path={MAIN_PATH()} element={<Main />} />
         <Route path={SIGNIN_PATH()} element={<SignIn />} />
         <Route path={SIGNUP_PATH()} element={<SignUp />} />

@@ -1,26 +1,22 @@
-import React, { useEffect } from 'react'
+import React, { useEffect } from 'react';
 import { useCookies } from 'react-cookie';
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom';
 
 export default function OAuth() {
-
     const { token, expirationTime } = useParams();
-    const [cookies, setCookie] = useCookies();
+    const [cookies, setCookie] = useCookies(['access_token']);
     const navigate = useNavigate();
 
     useEffect(() => {
+        if (!token || !expirationTime) return;
 
-        if(!token || !expirationTime) return;
-        
-        const now = (new Date()).getTime() * 1000;
-        const expires = new Date(now + Number(expirationTime));
+        const now = new Date().getTime();
+        const expires = new Date(now + Number(expirationTime) * 1000);
 
-        setCookie('access_token', token, { expires, path: '/'});
+        setCookie('access_token', token, { expires, path: '/' });
         navigate('/');
 
-    }, [token])
+    }, [token, expirationTime, setCookie, navigate]);
 
-    return (
-        <></>
-    )
+    return null;
 }

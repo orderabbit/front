@@ -8,7 +8,7 @@ import nicknameCheckResponseDto from "./response/auth/nickname-check.response.dt
 import { DeleteBoardResponseDto, GetBoardResponseDto, GetCommentListResponseDto, GetFavoriteListResponseDto, GetLatestBoardListResponseDto, GetSearchBoardListResponseDto, GetTop3BoardResponseDto, GetUserBoardListResponseDto, IncreaseViewCountResponseDto, PatchBoardResponseDto, PostBoardResponseDto, PostCommentResponseDto, PutFavoriteResponseDto } from "./response/board";
 import { GetSignInUserResponseDto, GetUserResponseDto, PatchNicknameResponseDto, PatchProfileImageResponseDto } from "./response/user";
 import { GetPopularListResponseDto, GetRelationListResponseDto } from "./response/search";
-import { PatchNicknameRequestDto, PatchProfileImageRequestDto } from "./request/user";
+import { PatchNicknameRequestDto, PatchPasswordRequestDto, PatchProfileImageRequestDto } from "./request/user";
 import { PostMusicRequestDto } from "./request/music";
 import { DeleteMusicResponseDto, GetMusicResponseDto, PostMusicResponseDto } from "./response/music";
 
@@ -46,6 +46,7 @@ const GET_TOP_3_BOARD_LIST_URL = () => `${API_DOMAIN}/board/top-3`;
 const GET_LATEST_BOARD_LIST_URL = () => `${API_DOMAIN}/board/latest-list`;
 const GET_POPULAR_LIST_URL = () => `${API_DOMAIN}/search/popular-list`;
 
+const CHANGE_PASSWORD_URL = () => `${API_DOMAIN}/user/change-password`;
 const PATCH_NICKNAME_URL = () => `${API_DOMAIN}/user/nickname`;
 const PATCH_PROFILE_IMAGE_URL = () => `${API_DOMAIN}/user/profile-image`;
 const DELETE_MUSIC_URL = (url: string) => `${API_DOMAIN}/music/delete/${url}`;
@@ -65,6 +66,20 @@ const GET_SEARCH_BOARD_LIST_URL = (searchWord: string, preSearchWord: string | n
 const FILE_DOMAIN = `${DOMAIN}/file`;
 const FILE_UPLOAD_URL = () => `${FILE_DOMAIN}/upload`;
 const multipartFormData = { headers: { 'Url-Type': 'multipart/form-data' } };
+
+export const changePasswordRequest = async (accessToken: string, requestBody: PatchPasswordRequestDto) => {
+    const result = await axios.patch(CHANGE_PASSWORD_URL(), requestBody, authorization(accessToken))
+        .then(response => {
+            const responseBody: ResponseDto = response.data;
+            return responseBody;
+        })
+        .catch(error => {
+            if (!error.response) return null;
+            const responseBody: ResponseDto = error.response.data;
+            return responseBody;
+        });
+    return result;
+};
 
 export const deleteMusicRequest = async (url: string) => {
     const result = await axios.delete(DELETE_MUSIC_URL(url))

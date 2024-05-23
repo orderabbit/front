@@ -19,36 +19,42 @@
 }
 
 .video-title-list::-webkit-scrollbar {
-  width: 5px; /* 스크롤바의 너비 설정 */
+  width: 5px;
+  /* 스크롤바의 너비 설정 */
 }
 
 .video-title-list::-webkit-scrollbar-track {
-  background: #f1f1f1; /* 스크롤바 트랙의 배경색 설정 */
+  background: #f1f1f1;
+  /* 스크롤바 트랙의 배경색 설정 */
 }
 
 .video-title-list::-webkit-scrollbar-thumb {
-  background: #888; /* 스크롤바 색상 설정 */
-  border-radius: 5px; /* 스크롤바의 모서리 반경 설정 */
+  background: #888;
+  /* 스크롤바 색상 설정 */
+  border-radius: 5px;
+  /* 스크롤바의 모서리 반경 설정 */
 }
 
 .video-title-list::-webkit-scrollbar-thumb:hover {
-  background: #555; /* 마우스 호버 시 스크롤바의 색상 변경 */
+  background: #555;
+  /* 마우스 호버 시 스크롤바의 색상 변경 */
 }
 
 .player {
   position: fixed;
-  top: 50%;
-  left: 20%;
+  top: 80%;
+  left: 10%;
   transform: translate(-50%, -50%);
 }
+
 .player-wrapper {
   position: relative;
   z-index: 9999;
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 500px;
-  height: 500px;
+  width: 100px;
+  height: 100px;
 }
 
 .player-container {
@@ -57,16 +63,14 @@
   position: absolute;
   bottom: 30px;
   left: 0;
-  transform: translate(
-    20px,
-    -20px
-  );
+  transform: translate(20px,
+      -20px);
   display: flex;
   flex-direction: column;
   padding: 10px;
   border-radius: 10px;
   overflow: hidden;
-  background-color: white;  
+  background-color: white;
   box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
 }
 
@@ -89,7 +93,7 @@
   position: absolute;
   z-index: 9999;
   left: 140px;
-  top: 50px;
+  top: -350px;
 }
 
 .thumbnail-container {
@@ -123,8 +127,13 @@
   font-weight: 400;
   line-height: 100%;
   white-space: nowrap;
-  text-overflow: ellipsis;
-  /* animation: marquee 10s infinite linear; */
+  /* text-overflow: ellipsis; */
+  animation: text-animation linear infinite;
+  /* animation: slide-in linear infinite; */
+}
+
+.animate-title {
+  animation: slide-in 10s infinite linear;
 }
 
 .info-channelTitle {
@@ -144,7 +153,8 @@
 }
 
 .controls .icon-button {
-  margin-right: 10px; /* 아이콘들 사이의 오른쪽 여백을 설정합니다 */
+  margin-right: 10px;
+  /* 아이콘들 사이의 오른쪽 여백을 설정합니다 */
 }
 
 .buttons {
@@ -165,7 +175,6 @@
   width: 100%;
   text-align: center;
   display: flex;
-  /* justify-content: center; */
   align-items: center;
 }
 
@@ -252,17 +261,17 @@
   box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.5);
 }
 
-/* URL 입력칸을 플레이어 밖으로 빼기 위해 추가된 부분 */
 .url-input-container {
   position: absolute;
-  bottom: 20px; /* 플레이어 래퍼의 아래에서 30픽셀 위에 위치하도록 설정 */
-  left: 30px; /* 플레이어 래퍼의 좌측에서 30픽셀 떨어지도록 설정 */
+  bottom: 20px;
+  /* 플레이어 래퍼의 아래에서 30픽셀 위에 위치하도록 설정 */
+  left: 30px;
+  /* 플레이어 래퍼의 좌측에서 30픽셀 떨어지도록 설정 */
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 10px;
-  background-color: white;
-  border-radius: 10px;
+  /* border-radius: 10px; */
   z-index: 1000;
 }
 
@@ -282,12 +291,12 @@
   margin: 0;
 }
 
-/* 기존 CSS에 추가 */
 .video-title-list {
   border-radius: 5%;
   position: absolute;
-  top: 80px;
-  right: -130px; /* 오른쪽으로 보내려면 음수값으로 설정합니다. */
+  top: -320px;
+  right: -520px;
+  /* 오른쪽으로 보내려면 음수값으로 설정합니다. */
   width: 220px;
   max-height: 150px;
   background-color: white;
@@ -295,26 +304,33 @@
   padding: 5px;
   z-index: 1000;
   box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
-  margin-right: 120px; /* 플레이어 컨테이너와의 간격 조절 */
+  margin-right: 120px;
+  /* 플레이어 컨테이너와의 간격 조절 */
 }
 
 .video-title-list ul {
-  list-style: none; /* 리스트 스타일 제거 */
-  padding: 0; /* 리스트의 내부 여백 제거 */
-  margin: 0; /* 리스트의 바깥 여백 제거 */
-  white-space: nowrap; /* 텍스트가 한 줄로 유지되도록 설정 */
+  list-style: none;
+  /* 리스트 스타일 제거 */
+  padding: 0;
+  /* 리스트의 내부 여백 제거 */
+  margin: 0;
+  /* 리스트의 바깥 여백 제거 */
+  white-space: nowrap;
+  /* 텍스트가 한 줄로 유지되도록 설정 */
 }
 
 .video-title-list li {
   display: flex;
   align-items: center;
-  margin-bottom: 8px; /* 아이템 간격 조정 */
+  margin-bottom: 8px;
+  /* 아이템 간격 조정 */
 }
 
 .video-title-list ul li {
   display: flex;
   align-items: center;
-  padding: 5px 0; /* 각 항목의 내부 여백 설정 */
+  padding: 5px 0;
+  /* 각 항목의 내부 여백 설정 */
   /* border-bottom: 1px solid #ccc; 각 항목 사이에 구분선 추가 */
   overflow: hidden;
   white-space: nowrap;
@@ -322,26 +338,32 @@
 }
 
 .video-title-list span {
-  font-size: 14px; /* 폰트 사이즈 조정 */
+  font-size: 14px;
+  /* 폰트 사이즈 조정 */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 200px; /* 적절한 최대 너비 설정 */
+  max-width: 200px;
+  /* 적절한 최대 너비 설정 */
   display: inline-block;
   margin: 2px;
 }
 
 .video-title-list ul li:hover {
-  background-color: #f1f1f1; /* 마우스 호버 시 배경색 변경 */
-  cursor: pointer; /* 마우스 커서를 포인터로 변경 */
+  background-color: #f1f1f1;
+  /* 마우스 호버 시 배경색 변경 */
+  cursor: pointer;
+  /* 마우스 커서를 포인터로 변경 */
 }
 
 .video-title-list ul li:last-child {
-  border-bottom: none; /* 마지막 항목의 구분선 제거 */
+  border-bottom: none;
+  /* 마지막 항목의 구분선 제거 */
 }
 
 .delete-button-container {
-  margin-right: 8px; /* 삭제 버튼과 제목 간격 조정 */
+  margin-right: 8px;
+  /* 삭제 버튼과 제목 간격 조정 */
 }
 
 .icon-buttons {
@@ -377,12 +399,17 @@
 
 }
 
-/*
-    @keyframes marquee {
-        0% {
-            transform: translateX(20%);
-        }
-        100% {
-            transform: translateX(-120%);
-        }
-    } */
+@keyframes slide-in {
+  from {
+      transform: translateX(10%);
+  }
+  to {
+      transform: translateX(-300%);
+  }
+}
+
+@keyframes text-animation {
+  0% { transform: translateX(0); }
+  50% { transform: translateX(10px); }
+  100% { transform: translateX(0); }
+}
