@@ -681,7 +681,6 @@ const Test: React.FC<PlayerProps> = ({ }) => {
                     xPos = containerWidth;
                 }
                 text.style.transform = `translateX(${xPos}px)`;
-                console.log(`xPos: ${xPos}, containerWidth: ${containerWidth}, textWidth: ${textWidth}`);
                 requestAnimationFrame(step);
             };
             step();
