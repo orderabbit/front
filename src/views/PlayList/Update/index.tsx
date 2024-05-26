@@ -1,20 +1,22 @@
-import { getBoardRequest } from 'apis';
-import { ResponseDto } from 'apis/response';
-import { GetBoardResponseDto } from 'apis/response/board';
-import { MAIN_PATH } from 'constant';
 import { ChangeEvent, useEffect, useRef, useState } from 'react';
-import { useCookies } from 'react-cookie';
-import { useNavigate, useParams } from 'react-router-dom';
-import { useLoginUserStore } from 'stores';
 import useBoardStore from 'stores/board.store';
 import './style.css';
+import { useNavigate, useParams } from 'react-router-dom';
+import { MAIN_PATH } from 'constant';
+import { useCookies } from 'react-cookie';
+import { useLoginUserStore } from 'stores';
+import { getBoardRequest } from 'apis';
+import { GetBoardResponseDto } from 'apis/response/board';
+import { ResponseDto } from 'apis/response';
 import { convertUrlsToFile } from 'utils';
+import { log } from 'console';
 
 export default function Write() {
 
   const titleRef = useRef<HTMLTextAreaElement | null>(null);
   const contentRef = useRef<HTMLTextAreaElement | null>(null);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
+  const youtubeRef = useRef<HTMLTextAreaElement | null>(null);
   const videoUrlInputRef = useRef<HTMLInputElement | null>(null);
 
   const {itemNumber} = useParams();
@@ -28,33 +30,44 @@ export default function Write() {
   const [cookies, setCookies] = useCookies();
   const [imageUrls, setImageUrls] = useState<string[]>([]);
 
-  const navigator = useNavigate();
+  const navigate = useNavigate();
+
+  const getBoardResponse = (responseBody: GetBoardResponseDto | ResponseDto | null) => {
+    if(!responseBody) return;
+    const {code} = responseBody;
+    if(code === 'NB') alert('존재하지 않습니다.');
+    if(code === 'DBE') alert('데이터베이스 오류입니다.');
+    if(code === 'SU') {
+      navigate(MAIN_PATH());
+      return;
+    }
+
+    const {title, content, videoUrl, boardImageList, writerId} = responseBody as GetBoardResponseDto;
+    setTitle(title);
+    setContent(content);
+    setVideoUrl(videoUrl);
+    setImageUrls(boardImageList);
+    convertUrlsToFile(boardImageList).then(boardImageFileList => setBoardImageFileList(boardImageFileList));
+
+    if(!loginUser || loginUser.userId !== writerId){
+      navigate(MAIN_PATH());
+      return;
+    }
+
+    if(!videoUrlInputRef.current) return;
+    videoUrlInputRef.current.style.height = 'auto';
+    videoUrlInputRef.current.style.height = `${videoUrlInputRef.current.scrollHeight}px`;
+  };
 
   const toggleUrlBox = () => {
     setShowMore((prevShowMore) => !prevShowMore);
   };
 
-  const getBoardResponse = (responseBody: GetBoardResponseDto | ResponseDto | null) => {
-    if(!responseBody) return;
-    const {code} = responseBody;
-    if(code === 'NB') alert('존재하지 않습니다/');
-    if(code === 'DBE') alert('데이터베이스 오류입니다.');
-    if(code === 'SU'){
-      navigator(MAIN_PATH());
-      return;
+  const handleKeyPress = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      toggleUrlBox();
     }
-
-    const {title, content, boardImageList, writerId} = responseBody as GetBoardResponseDto;
-    setTitle(title);
-    setContent(content);
-    setImageUrls(boardImageList);
-    convertUrlsToFile(boardImageList).then(boardImageFileList => setBoardImageFileList(boardImageFileList));
-
-    if(!loginUser || loginUser.userId !== writerId) {
-      navigator(MAIN_PATH());
-      return;
-    }
-  }
+  };
 
   const onTitleChangeHandler = (event: ChangeEvent<HTMLTextAreaElement>) => {
     const {value} = event.target;
@@ -91,6 +104,15 @@ export default function Write() {
     imageInputRef.current.value='';
   }
 
+  const onVideoUrlChangeHandler = (event: ChangeEvent<HTMLInputElement>) => {
+    const { value } = event.target;
+    setVideoUrl(value);
+
+    if(!videoUrlInputRef.current) return;
+    videoUrlInputRef.current.style.height = 'auto';
+    videoUrlInputRef.current.style.height = `${videoUrlInputRef.current.scrollHeight}px`;
+  };
+
   const onImageUploadButtonClickHandler = () => {
     if(!imageInputRef.current) return;
     imageInputRef.current.click();
@@ -117,25 +139,30 @@ export default function Write() {
     return extractYouTubeVideoId(url) !== null;
   };
 
-  const onVideoUrlChangeHandler = (event: ChangeEvent<HTMLInputElement>) => {
+  const generateYouTubeEmbedCode = (url: string) => {
+    const videoId = extractYouTubeVideoId(url);
+    if (videoId) {
+      return `<iframe width="560" height="315" src="https://www.youtube.com/embed/${videoId}" frameborder="0" allowfullscreen></iframe>`;
+    }
+    return '';
+  };
+
+  const onUrlChangeHandler = (event: ChangeEvent<HTMLTextAreaElement>) => {
     const { value } = event.target;
     setVideoUrl(value);
 
-    if(!videoUrlInputRef.current) return;
-    videoUrlInputRef.current.style.height = 'auto';
-    videoUrlInputRef.current.style.height = `${videoUrlInputRef.current.scrollHeight}px`;
-  };
-
-  const handleKeyPress = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter') {
-      toggleUrlBox();
+    if (isValidYouTubeUrl(value)) {
+      const embedCode = generateYouTubeEmbedCode(value);
     }
+    if(!youtubeRef.current) return;
+    youtubeRef.current.style.height = 'auto';
+    youtubeRef.current.style.height = `${youtubeRef.current.scrollHeight}px`;
   };
 
   useEffect(() => {
     const accessToken = cookies.accessToken;
     if(!accessToken){
-      navigator(MAIN_PATH());
+      navigate(MAIN_PATH());
       return;
     }
     if(!itemNumber) return;
@@ -143,32 +170,32 @@ export default function Write() {
   }, [itemNumber]);
 
   return (
-    <div id='board-write-wrapper'>
-      <div className='board-write-container'>
-        <div className='board-write-box'>
-          <div className='board-write-title-box'>
-            <textarea ref={titleRef} className='board-write-title-textarea' rows={1} placeholder='제목을 작성해주세요.' value={title} onChange={onTitleChangeHandler}/>
+    <div id='board-update-wrapper'>
+      <div className='board-update-container'>
+        <div className='board-update-box'>
+          <div className='board-update-title-box'>
+            <textarea ref={titleRef} className='board-update-title-textarea' rows={1} placeholder='제목을 작성해주세요.' value={title} onChange={onTitleChangeHandler}/>
           </div>
           <div className='divider'></div>
-          <div className='board-write-content-box'>
-            <textarea ref={contentRef} className='board-write-content-textarea' placeholder='내용을 작성해주세요.' value={content} onChange={onContentChangeHandler}/>
-            <div className='board-write-icon-box'>
+          <div className='board-update-content-box'>
+            <textarea ref={contentRef} className='board-update-content-textarea' placeholder='내용을 작성해주세요.' value={content} onChange={onContentChangeHandler}/>
+            <div className='board-update-icon-box'>
               <div className='icon-button' onClick={onImageUploadButtonClickHandler}>
                 <div className='icon image-box-light-icon'></div>
               </div>
               <input ref={imageInputRef} type='file' accept='image/*' style={{display: 'none'}} onChange={onImageChangeHandler}/>
               <div className='icon-button' onClick={toggleUrlBox}>
-                <div className='icon image-box-light-icon'></div>
+                <div className='icon url-box-light-icon'></div>
               </div>
               {showMore &&
               <input ref={videoUrlInputRef} type='text' className='url-input' placeholder='URL을 입력하세요.' value={videoUrl} onChange={onVideoUrlChangeHandler} onKeyPress={handleKeyPress}/>
-               }
-            </div>              
+              }
+            </div>
           </div>
-          <div className='board-write-images-box'>
+          <div className='board-update-images-box'>
             {imageUrls.map((imageUrl, index) =>
-            <div className='board-write-image-box' key={index}>
-              <img className='board-write-image' src={imageUrl}/>
+            <div className='board-update-image-box' key={index}>
+              <img className='board-update-image' src={imageUrl}/>
               <div className='icon-button image-close' onClick={() => onImageCloseButtonClickHandler(index)}>
                 <div className='icon close-icon'></div>
               </div>
@@ -176,7 +203,7 @@ export default function Write() {
             )}
           </div>
             {isValidYouTubeUrl(videoUrl) && (
-              <div className='board-write-youtube-preview'>
+              <div className='board-update-youtube-preview'>
                 <iframe width="560" height="315" src={`https://www.youtube.com/embed/${extractYouTubeVideoId(videoUrl)}`} frameBorder="0" allowFullScreen></iframe>
               </div>
             )}

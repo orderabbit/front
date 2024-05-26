@@ -6,14 +6,13 @@ import { useLoginUserStore, useBoardStore } from 'stores';
 import './style.css';
 import { fileUploadRequest, patchBoardRequest, postBoardRequest } from 'apis';
 import { PatchBoardResponseDto, PostBoardResponseDto } from 'apis/response/board';
-import { PostBoardRequestDto, patchBoardRequestDto } from 'apis/request/board';
+import { PostBoardRequestDto, PatchBoardRequestDto } from 'apis/request/board';
 import { ResponseDto } from 'apis/response';
 import { write } from 'fs';
 
 export default function Header() {
 
   const { loginUser, setLoginUser, resetLoginUser } = useLoginUserStore();
-  const { userId } = useParams();
   const { pathname } = useLocation();
   const [cookies, setCookie] = useCookies();
 
@@ -125,15 +124,14 @@ export default function Header() {
       return <div className='white-button' onClick={onSignOutButtonClickHandler}>{'로그아웃'}</div>
     if (isLogin && isMainPage || isDetailPage)
       return <div className='white-button' onClick={onMyPageButtonClickHandler}>{'마이페이지'}</div>
-    if(!isLogin)
-    return <div className='black-button' onClick={onSignInButtonClickHandler}>{'로그인'}</div>;
+    if (!isLogin)
+      return <div className='black-button' onClick={onSignInButtonClickHandler}>{'로그인'}</div>;
     return null;
   };
 
   const UploadButton = () => {
 
     const { itemNumber } = useParams();
-
     const { title, content, videoUrl, boardImageFileList, resetBoard } = useBoardStore();
 
     const postBoardResponse = (responseBody: PostBoardResponseDto | ResponseDto | null) => {
@@ -158,8 +156,6 @@ export default function Header() {
       if (code === 'AF' || code === 'NU' || code === 'NB' || code === 'NP') navigator(SIGNIN_PATH());
       if (code === 'VF') alert('모두 입력하세요.');
       if (code !== 'SU') return;
-
-      resetBoard();
 
       if (!itemNumber) return;
       navigator(BOARD_PATH() + '/' + DETAIL_PATH(itemNumber));
@@ -186,9 +182,12 @@ export default function Header() {
         }
         postBoardRequest(requestBody, accessToken).then(postBoardResponse);
       } else {
-        if (!itemNumber) return;
-        const requestBody: patchBoardRequestDto = { title, content, videoUrl, boardImageList }
-        patchBoardRequest(itemNumber, requestBody, accessToken).then(patchBoardResponse);
+        if (!itemNumber) {
+          alert('게시글 번호가 없습니다.');
+        } else {
+          const requestBody: PatchBoardRequestDto = { title, content, videoUrl, boardImageList }
+          patchBoardRequest(itemNumber, requestBody, accessToken).then(patchBoardResponse);
+        }
       }
     }
 

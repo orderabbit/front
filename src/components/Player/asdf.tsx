@@ -158,7 +158,6 @@ const Test: React.FC<PlayerProps> = ({ }) => {
                     console.log("플레이어 상태: PLAYING");
                     setIsPlaying(true);
                     updateCurrentTime();
-                    fetchSubtitles();
                     break;
                 case YT.PlayerState.ENDED:
                     console.log("플레이어 상태: ENDED");
@@ -616,38 +615,6 @@ const Test: React.FC<PlayerProps> = ({ }) => {
         const intervalId = setInterval(updateCurrentTime, 1000);
         return () => clearInterval(intervalId);
     }, []);
-    // 자막 가져오기
-    const fetchSubtitles = () => {
-        const videoId = playlist[currentVideoIndex].id;
-        const apiUrl = `https://www.googleapis.com/youtube/v3/captions?part=snippet&videoId=${videoId}&key=${ApiKey}`;
-        axios.get(apiUrl)
-            .then(response => {
-                const xmlData = response.data;
-                const subtitles = parseSubtitles(xmlData);
-                setSubtitles(subtitles);
-            })
-            .catch(error => {
-                console.error('Error fetching subtitles:', error);
-            });
-    };
-    // 자막 파싱
-    const parseSubtitles = (xmlData: string) => {
-        const parser = new DOMParser();
-        const xmlDoc = parser.parseFromString(xmlData, "text/xml");
-        const textNodes = xmlDoc.getElementsByTagName("text");
-        const subtitles: string[] = [];
-        for (let i = 0; i < textNodes.length; i++) {
-            const textNode = textNodes[i];
-            const subtitle = textNode.textContent;
-
-            console.log('subtitle:', subtitle);
-            if (subtitle) {
-                subtitles.push(subtitle);
-            }
-        }
-        return subtitles;
-    };
-
     // 타이틀 애니메이션
     useEffect(() => {
         if (titleRef.current && containerRef.current) {
@@ -663,37 +630,28 @@ const Test: React.FC<PlayerProps> = ({ }) => {
             }
         }
     }, [currentVideoIndex]);
-
-
-
-
-
+    // 애니메이션 효과
     useEffect(() => {
         const animateText = () => {
             const container = containerRef.current;
             const text = titleRef.current;
             if (!container || !text) return;
-
             let start = Date.now();
             const containerWidth = container.offsetWidth;
             const textWidth = text.offsetWidth;
             let xPos = containerWidth;
-
             const step = () => {
                 const elapsed = Date.now() - start;
-                const speed = 100; // 이동 속도 (픽셀/초)
+                const speed = 100;
                 xPos = containerWidth - (elapsed / 1000) * speed;
-
                 if (xPos + textWidth < 0) {
-                    start = Date.now(); // 애니메이션을 다시 시작합니다.
+                    start = Date.now();
                     xPos = containerWidth;
                 }
-
                 text.style.transform = `translateX(${xPos}px)`;
                 console.log(`xPos: ${xPos}, containerWidth: ${containerWidth}, textWidth: ${textWidth}`);
                 requestAnimationFrame(step);
             };
-
             step();
         };
 

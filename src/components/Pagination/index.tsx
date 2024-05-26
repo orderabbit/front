@@ -16,12 +16,6 @@ export default function Pagination(props: Props) {
   const {currentPage, currentSection, viewPageList, totalSection} = props;
   const {setCurrentPage, setCurrentSection} = props;
 
-  useEffect(() => {
-    console.log('Current Page:', currentPage);
-    console.log('Current Section:', currentSection);
-    console.log('Total Section:', totalSection);
-  }, [currentPage, currentSection, totalSection]);
-
   const onPageClickHandler = (page: number) => {
     setCurrentPage(page);
   }

@@ -13,7 +13,7 @@ export default function Container() {
     <>
         <Header />
         <Outlet />
-        <Test playlist={[]} />
+        {/* <Test playlist={[]} /> */}
         {(pathname !== SIGNIN_PATH() && pathname !== SIGNUP_PATH()) && <Footer />}
     </>
   )

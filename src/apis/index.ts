@@ -1,7 +1,7 @@
 import axios, { AxiosResponse } from "axios";
 import { CheckCertificationRequestDto, EmailCertificationRequestDto, SignInRequestDto, SignUpRequestDto, userIdCheckRequestDto } from "./request/auth";
 import nicknameCheckRequestDto from "./request/auth/nickname-check.request.dto";
-import { PostBoardRequestDto, PostCommentRequestDto, patchBoardRequestDto } from "./request/board";
+import { PostBoardRequestDto, PostCommentRequestDto, PatchBoardRequestDto } from "./request/board";
 import { ResponseDto } from "./response";
 import { CheckCertificationResponseDto, EmailCertificationResponseDto, SignInResponseDto, SignUpResponseDto, userIdCheckResponseDto } from "./response/auth";
 import nicknameCheckResponseDto from "./response/auth/nickname-check.response.dto";
@@ -319,7 +319,7 @@ export const patchProfileImageRequest = async (requestBody: PatchProfileImageReq
     return result;
 }
 
-export const patchBoardRequest = async (itemNumber: number | string, requestBody: patchBoardRequestDto, accessToken: string) => {
+export const patchBoardRequest = async (itemNumber: number | string, requestBody: PatchBoardRequestDto, accessToken: string) => {
     const result = await axios.patch(PATCH_BOARD_URL(itemNumber), requestBody, authorization(accessToken))
         .then(response => {
             const responseBody: PatchBoardResponseDto = response.data;
@@ -354,7 +354,7 @@ export const postBoardRequest = async (requestBody: PostBoardRequestDto, accessT
             return responseBody;
         })
         .catch(error => {
-            if (!error.response) return null;
+            // if (!error.response) return null;
             const responseBody: ResponseDto = error.response.data;
             return responseBody;
         })

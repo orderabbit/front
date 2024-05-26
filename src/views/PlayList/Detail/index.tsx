@@ -386,7 +386,7 @@ export default function Detail() {
                 <span className="emphasis">{favoriteList.length}</span>
               </div>
               <div className="board-detail-bottom-favorite-contents">
-                {favoriteList.map((item) => (<FavoriteItem key={item.userId} favoriteListItem={item} />))}
+                {favoriteList.map(item => <FavoriteItem key={item.userId} favoriteListItem={item} />)}
               </div>
             </div>
           </div>
