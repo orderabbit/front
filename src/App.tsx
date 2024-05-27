@@ -9,7 +9,6 @@ import Update from 'views/PlayList/Update';
 import Write from 'views/PlayList/Write';
 import Search from 'views/Search';
 import UserP from 'views/User';
-import './App.css';
 import { useEffect } from 'react';
 import { useCookies } from 'react-cookie';
 import { useLoginUserStore } from 'stores';
@@ -21,6 +20,7 @@ import Player from 'components/Player/Player';
 import ASDF from 'components/Player/asdf';
 import OAuth from 'views/Authentication/OAuth';
 import ChangePasswordForm from 'views/User/PasswordChange';
+import './App.css';
 
 function App() {
   const {setLoginUser, resetLoginUser} = useLoginUserStore();

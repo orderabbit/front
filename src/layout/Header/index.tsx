@@ -8,7 +8,7 @@ import { fileUploadRequest, patchBoardRequest, postBoardRequest } from 'apis';
 import { PatchBoardResponseDto, PostBoardResponseDto } from 'apis/response/board';
 import { PostBoardRequestDto, PatchBoardRequestDto } from 'apis/request/board';
 import { ResponseDto } from 'apis/response';
-import { write } from 'fs';
+import { Board } from 'types/interface';
 
 export default function Header() {
 
@@ -51,7 +51,6 @@ export default function Header() {
   const onLogoClickHandler = () => {
     navigator(MAIN_PATH());
   }
-
   const SearchButton = () => {
 
     const searchButtonRef = useRef<HTMLDivElement | null>(null);
@@ -103,7 +102,6 @@ export default function Header() {
       </div>
     );
   };
-
   const MyPageButton = () => {
 
     const onMyPageButtonClickHandler = () => {
@@ -119,7 +117,6 @@ export default function Header() {
     const onSignInButtonClickHandler = () => {
       navigator(SIGNIN_PATH());
     };
-
     if (isLogin && isUserPage)
       return <div className='white-button' onClick={onSignOutButtonClickHandler}>{'로그아웃'}</div>
     if (isLogin && isMainPage || isDetailPage)
@@ -128,10 +125,12 @@ export default function Header() {
       return <div className='black-button' onClick={onSignInButtonClickHandler}>{'로그인'}</div>;
     return null;
   };
-
+  
   const UploadButton = () => {
 
-    const { itemNumber } = useParams();
+    const params = useParams();
+    console.log();
+    const itemNumber = Number(params["Number"]);
     const { title, content, videoUrl, boardImageFileList, resetBoard } = useBoardStore();
 
     const postBoardResponse = (responseBody: PostBoardResponseDto | ResponseDto | null) => {
@@ -182,8 +181,9 @@ export default function Header() {
         }
         postBoardRequest(requestBody, accessToken).then(postBoardResponse);
       } else {
+        console.log(itemNumber);
         if (!itemNumber) {
-          alert('게시글 번호가 없습니다.');
+          alert('존재하지 않는 번호입니다.');
         } else {
           const requestBody: PatchBoardRequestDto = { title, content, videoUrl, boardImageList }
           patchBoardRequest(itemNumber, requestBody, accessToken).then(patchBoardResponse);

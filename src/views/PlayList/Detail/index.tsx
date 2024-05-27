@@ -398,7 +398,7 @@ export default function Detail() {
                 <span className="emphasis">{totalCommentCount}</span>
               </div>
               <div className="board-detail-bottom-comment-list-container">
-                {viewList.map((item) => (<CommentItem commentListItem={item} />))}
+                {viewList.map((item) => (<CommentItem key={item.id} commentListItem={item} />))}
               </div>
             </div>
 

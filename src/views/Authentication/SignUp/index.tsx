@@ -246,7 +246,6 @@ const signUpResponse = (responseBody: ResponseBody<SignUpResponseDto>) => {
         }
 
         const requestBody: SignUpRequestDto = {userId, nickname, password, email, certificationNumber, agreedPersonal};
-        console.log(requestBody);
         signupRequest(requestBody).then(signUpResponse)
     };
 

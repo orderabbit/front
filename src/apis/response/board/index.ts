@@ -11,6 +11,7 @@ import GetTop3BoardResponseDto from "./get-top-3-board-list.response.dto";
 import GetLatestBoardListResponseDto from "./get-latest-board-list.response.dto";
 import GetSearchBoardListResponseDto from "./get-search-board-list.response.dto";
 import GetUserBoardListResponseDto from "./get-user-board-list.response.dto";
+import DeleteCommentResponseDto from "./delete-comment.response.dto";
 
 export type {
     PostBoardResponseDto,
@@ -25,5 +26,6 @@ export type {
     GetTop3BoardResponseDto,
     GetLatestBoardListResponseDto,
     GetSearchBoardListResponseDto,
-    GetUserBoardListResponseDto
+    GetUserBoardListResponseDto,
+    DeleteCommentResponseDto
 }

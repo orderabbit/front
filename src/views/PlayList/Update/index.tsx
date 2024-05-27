@@ -9,7 +9,6 @@ import { getBoardRequest } from 'apis';
 import { GetBoardResponseDto } from 'apis/response/board';
 import { ResponseDto } from 'apis/response';
 import { convertUrlsToFile } from 'utils';
-import { log } from 'console';
 
 export default function Write() {
 
@@ -19,7 +18,8 @@ export default function Write() {
   const youtubeRef = useRef<HTMLTextAreaElement | null>(null);
   const videoUrlInputRef = useRef<HTMLInputElement | null>(null);
 
-  const {itemNumber} = useParams();
+  const itemNumber = Number(useParams()["Number"]);
+
   const {title, setTitle} = useBoardStore();
   const {content, setContent} = useBoardStore();
   const {videoUrl, setVideoUrl} = useBoardStore();
@@ -37,7 +37,7 @@ export default function Write() {
     const {code} = responseBody;
     if(code === 'NB') alert('존재하지 않습니다.');
     if(code === 'DBE') alert('데이터베이스 오류입니다.');
-    if(code === 'SU') {
+    if(code !== 'SU') {
       navigate(MAIN_PATH());
       return;
     }
@@ -165,7 +165,7 @@ export default function Write() {
       navigate(MAIN_PATH());
       return;
     }
-    if(!itemNumber) return;
+    if(!itemNumber) return;    
     getBoardRequest(itemNumber).then(getBoardResponse);
   }, [itemNumber]);
 
