@@ -90,12 +90,11 @@ export default function Write() {
     setBoardImageFileList(newBoardImageFileList);
   }
 
-  const onVideoUrlChangeHandler = (index: number, event: ChangeEvent<HTMLInputElement>) => { // index 파라미터 추가
+  const onVideoUrlChangeHandler = (index: number, event: ChangeEvent<HTMLInputElement>) => {
     const { value } = event.target;
     const updatedVideoUrls = [...videoUrls];
     updatedVideoUrls[index] = value;
     setVideoUrls(updatedVideoUrls);
-
     if (videoUrlInputRefs.current[index]) {
       videoUrlInputRefs.current[index]!.style.height = 'auto';
       videoUrlInputRefs.current[index]!.style.height = `${videoUrlInputRefs.current[index]!.scrollHeight}px`;
@@ -123,13 +122,19 @@ export default function Write() {
   const addNewUrlInput = () => {
     setVideoUrls((prevUrls) => [...prevUrls, '']);
     videoUrlInputRefs.current.push(null);
-
     setTimeout(() => {
       const element = document.getElementById("board-write-container");
       if (element) {
         element.scrollTop = element.scrollHeight;
       }
     }, 0);
+  };
+
+  const removeInputField = (indexToRemove: number) => {
+    if (videoUrls.length === 1) {
+      return;
+    }
+    setVideoUrls((prevUrls) => prevUrls.filter((url, index) => index !== indexToRemove));
   };
 
   useEffect(() => {
@@ -160,12 +165,34 @@ export default function Write() {
                 <div className='icon url-box-light-icon'></div>
               </div>
               {showMore && (
-              <div className='icon-button' onClick={addNewUrlInput}>
-                <fa.FaPlus />
-              </div>
+                <div className='icon-button' onClick={addNewUrlInput}>
+                  <fa.FaPlus />
+                </div>
               )}
             </div>
           </div>
+          {showMore && (
+            <div className='video-url-box-container'>
+              <div className="video-url-box">
+                {videoUrls.map((videoUrl, index) => (
+                  <div key={index} className='input-with-button'>
+                    <input
+                      ref={(el) => (videoUrlInputRefs.current[index] = el)}
+                      type='text'
+                      className='url-input'
+                      placeholder={`Video URL ${index + 1}`}
+                      value={videoUrl}
+                      onChange={(event) => onVideoUrlChangeHandler(index, event)}
+                      onKeyPress={handleKeyPress}
+                    />
+                    <div className='icon-buttons' onClick={() => removeInputField(index)}>
+                      <div className='icon delete-icon'></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           <div className='board-write-images-box'>
             {imageUrls.map((imageUrl, index) =>
               <div className='board-write-image-box' key={index}>
@@ -184,25 +211,7 @@ export default function Write() {
             )
           ))}
         </div>
-        {showMore && (
-          <div className='video-url-box-container'>
-            <div className="video-url-box">
-              {videoUrls.map((videoUrl, index) => (
-                <input
-                  key={index}
-                  ref={(el) => (videoUrlInputRefs.current[index] = el)}
-                  type='text'
-                  className='url-input'
-                  placeholder={`Video URL ${index + 1}`}
-                  value={videoUrl}
-                  onChange={(event) => onVideoUrlChangeHandler(index, event)}
-                  onKeyPress={handleKeyPress}
-                />
-              ))}
-            </div>
-          </div>
-        )}
       </div>
-    </div>
-  )
+    </div >
+  );
 }

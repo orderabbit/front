@@ -179,6 +179,7 @@ export default function Header() {
         const requestBody: PostBoardRequestDto = {
           title, content, videoUrl, boardImageList
         }
+        console.log(requestBody);
         postBoardRequest(requestBody, accessToken).then(postBoardResponse);
       } else {
         console.log(itemNumber);
@@ -191,7 +192,7 @@ export default function Header() {
       }
     }
 
-    if (title && content && videoUrl && boardImageFileList.length > 0)
+    if (title && content && boardImageFileList.length > 0)
       return <div className='black-button' onClick={onUploadButtonClickHandler}>{'업로드'}</div>;
     return <div className='disable-button'>{'업로드'}</div>;
   };
