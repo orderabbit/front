@@ -63,23 +63,29 @@
     position: relative;
 }
 
-.url-input {
-    position: absolute;
-    top: calc(100% + 10px);
-   
-    right: 0;
+.video-url-box-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
     
+    top: -50px;
+    left: -20px;
+}
+
+.url-input {
+    height: 30px;
+
     padding: 10px;
     box-sizing: border-box;
 
-    border: none;
+    border: 1px solid #ccc;
     box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
     outline: none;
     background: none;
     resize: none;
 
     white-space: nowrap;
-    width: fit-content;
 
     color: rgba(0, 0, 0, 0.7);
     font-size: 16px;

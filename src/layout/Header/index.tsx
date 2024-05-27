@@ -191,7 +191,7 @@ export default function Header() {
       }
     }
 
-    if (title && content)
+    if (title && content && videoUrl && boardImageFileList.length > 0)
       return <div className='black-button' onClick={onUploadButtonClickHandler}>{'업로드'}</div>;
     return <div className='disable-button'>{'업로드'}</div>;
   };
