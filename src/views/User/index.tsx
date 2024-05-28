@@ -4,9 +4,9 @@ import { useNavigate, useParams } from 'react-router-dom';
 import './style.css';
 import { BoardListItem } from 'types/interface';
 import BoardItem from 'components/BoardItem';
-import { BOARD_PATH, MAIN_PATH, USER_PATH, WRITE_PATH } from 'constant';
+import { BOARD_PATH, MAIN_PATH, PASSWORD_PATH, USER_PATH, WRITE_PATH } from 'constant';
 import { useLoginUserStore } from 'stores';
-import { changePasswordRequest, fileUploadRequest, getUserBoardListRequest, getUserRequest, patchNicknameRequest, patchProfileImageRequest, withdrawUserRequest } from 'apis';
+import { fileUploadRequest, getUserBoardListRequest, getUserRequest, patchNicknameRequest, patchPasswordRequest, patchProfileImageRequest, withdrawUserRequest } from 'apis';
 import { GetUserBoardListResponseDto } from 'apis/response/board';
 import { ResponseDto } from 'apis/response';
 import { GetUserResponseDto, PatchNicknameResponseDto, PatchProfileImageResponseDto } from 'apis/response/user';
@@ -26,13 +26,15 @@ export default function User() {
 
   const UserTop = () => {
 
+    const { loginUser, setLoginUser, resetLoginUser } = useLoginUserStore();
     const imageInputRef = useRef<HTMLInputElement | null>(null);
 
-    // const userId = loginUser?.userId;
+    const [isPasswordChange, setPasswordChange] = useState<boolean>(false);
     const [isNicknameChange, setNicknameChange] = useState<boolean>(false);
     const [nickname, setNickname] = useState<string>('');
     const [email, setEmail] = useState<string>('');
     const [changeNickname, setChangeNickname] = useState<string>('');
+    const [changePassword, setChangePassword] = useState<string>('');
     const [profileImage, setProfileImage] = useState<string | null>(null);
 
     const getUserResponse = (responseBody: GetUserResponseDto | ResponseDto | null) => {
@@ -76,14 +78,13 @@ export default function User() {
     }
 
     const patchNicknameResponse = (responseBody: PatchNicknameResponseDto | ResponseDto | null) => {
-
       if (!cookies.accessToken) return;
 
       if (!responseBody) return;
       const { code } = responseBody;
-      if (code === 'VF') alert('비밀번호는 필수입니다.');
+      if (code === 'VF') alert('닉네임은 필수입니다.');
       if (code === 'AF') alert('인증에 실패했습니다.');
-      if (code === 'DP') alert('기존 비밀번호와 중복되는 비밀번호입니다.');
+      if (code === 'DN') alert('기존 닉네임과 중복되는 닉네임입니다.');
       if (code === 'NU') alert('존재하지 않는 유저입니다.');
       if (code === 'DBE') alert('데이터베이스 오류입니다.');
       if (code !== 'SU') return;
@@ -92,6 +93,7 @@ export default function User() {
       getUserRequest(userId, cookies.accessToken).then(getUserResponse);
       setNicknameChange(false);
     };
+
     const onProfileBoxClickHandler = () => {
       if (!isMyPage) return;
       if (!imageInputRef.current) return;
@@ -105,6 +107,12 @@ export default function User() {
       }
       setNicknameChange(!isNicknameChange);
     };
+
+
+    const onPasswordChangeButtonClickHandler = () => {
+      navigator(PASSWORD_PATH());
+    };
+
 
     const onProfileImageChangeHandler = (event: ChangeEvent<HTMLInputElement>) => {
       if (!event.target.files || !event.target.files.length) return;
@@ -159,6 +167,7 @@ export default function User() {
               </div>
               <div className='user-top-info-email'>{email}</div>
             </div>
+            <div className='password-change' onClick={onPasswordChangeButtonClickHandler}>{'비밀번호 변경'}</div>
           </div>
         </div>
       </div>

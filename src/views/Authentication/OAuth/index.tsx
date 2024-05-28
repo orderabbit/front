@@ -17,6 +17,7 @@ export default function OAuth() {
         const expires = new Date(now + Number(expirationTime) * 1000);
 
         setCookie('accessToken', token, { expires, path: '/' });
+        alert('로그인 되었습니다.');
         navigate('/');
 
     }, [token, expirationTime, setCookie, navigate]);

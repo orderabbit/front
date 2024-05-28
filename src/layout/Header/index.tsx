@@ -8,7 +8,6 @@ import { fileUploadRequest, patchBoardRequest, postBoardRequest } from 'apis';
 import { PatchBoardResponseDto, PostBoardResponseDto } from 'apis/response/board';
 import { PostBoardRequestDto, PatchBoardRequestDto } from 'apis/request/board';
 import { ResponseDto } from 'apis/response';
-import { Board } from 'types/interface';
 
 export default function Header() {
 

@@ -46,7 +46,7 @@ const GET_TOP_3_BOARD_LIST_URL = () => `${API_DOMAIN}/board/top-3`;
 const GET_LATEST_BOARD_LIST_URL = () => `${API_DOMAIN}/board/latest-list`;
 const GET_POPULAR_LIST_URL = () => `${API_DOMAIN}/search/popular-list`;
 
-const CHANGE_PASSWORD_URL = () => `${API_DOMAIN}/user/change-password`;
+const CHANGE_PASSWORD_URL = (userId: string) => `${API_DOMAIN}/user/change-password/${userId}`;
 const PATCH_NICKNAME_URL = () => `${API_DOMAIN}/user/nickname`;
 const PATCH_PROFILE_IMAGE_URL = () => `${API_DOMAIN}/user/profile-image`;
 const DELETE_MUSIC_URL = (url: string) => `${API_DOMAIN}/music/delete/${url}`;
@@ -68,8 +68,8 @@ const FILE_DOMAIN = `${DOMAIN}/file`;
 const FILE_UPLOAD_URL = () => `${FILE_DOMAIN}/upload`;
 const multipartFormData = { headers: { 'Url-Type': 'multipart/form-data' } };
 
-export const changePasswordRequest = async (accessToken: string, requestBody: PatchPasswordRequestDto) => {
-    const result = await axios.patch(CHANGE_PASSWORD_URL(), requestBody, authorization(accessToken))
+export const patchPasswordRequest = async (userId: string, accessToken: string, requestBody: PatchPasswordRequestDto) => {
+    const result = await axios.patch(CHANGE_PASSWORD_URL(userId), requestBody, authorization(accessToken))
         .then(response => {
             const responseBody: ResponseDto = response.data;
             return responseBody;

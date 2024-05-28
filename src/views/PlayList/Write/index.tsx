@@ -165,8 +165,8 @@ export default function Write() {
             </div>
           </div>
           {showMore &&
-              <input ref={videoUrlInputRef} type='text' className='url-input' placeholder='URL을 입력하세요.' value={videoUrl} onChange={onVideoUrlChangeHandler} onKeyPress={handleKeyPress} />
-            }
+            <input ref={videoUrlInputRef} type='text' className='url-input' placeholder='URL을 입력하세요.' value={videoUrl} onChange={onVideoUrlChangeHandler} onKeyPress={handleKeyPress} />
+          }
           <div className='board-update-images-box'>
             {imageUrls.map((imageUrl, index) =>
               <div className='board-update-image-box' key={index}>
