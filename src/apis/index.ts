@@ -6,9 +6,9 @@ import { ResponseDto } from "./response";
 import { CheckCertificationResponseDto, EmailCertificationResponseDto, SignInResponseDto, SignUpResponseDto, userIdCheckResponseDto } from "./response/auth";
 import nicknameCheckResponseDto from "./response/auth/nickname-check.response.dto";
 import { DeleteBoardResponseDto, GetBoardResponseDto, GetCommentListResponseDto, GetFavoriteListResponseDto, GetLatestBoardListResponseDto, GetSearchBoardListResponseDto, GetTop3BoardResponseDto, GetUserBoardListResponseDto, IncreaseViewCountResponseDto, PatchBoardResponseDto, PostBoardResponseDto, PostCommentResponseDto, PutFavoriteResponseDto } from "./response/board";
-import { GetSignInUserResponseDto, GetUserResponseDto, PatchNicknameResponseDto, PatchProfileImageResponseDto, WithdrawalUserResponseDto } from "./response/user";
+import { GetSignInUserResponseDto, GetUserResponseDto, PasswordRecoveryResponseDto, PatchNicknameResponseDto, PatchProfileImageResponseDto, WithdrawalUserResponseDto } from "./response/user";
 import { GetPopularListResponseDto, GetRelationListResponseDto } from "./response/search";
-import { PatchNicknameRequestDto, PatchPasswordRequestDto, PatchProfileImageRequestDto } from "./request/user";
+import { PasswordRecoveryRequestDto, PatchNicknameRequestDto, PatchPasswordRequestDto, PatchProfileImageRequestDto } from "./request/user";
 import { PostMusicRequestDto } from "./request/music";
 import { DeleteMusicResponseDto, GetMusicResponseDto, PostMusicResponseDto } from "./response/music";
 
@@ -46,6 +46,7 @@ const GET_TOP_3_BOARD_LIST_URL = () => `${API_DOMAIN}/board/top-3`;
 const GET_LATEST_BOARD_LIST_URL = () => `${API_DOMAIN}/board/latest-list`;
 const GET_POPULAR_LIST_URL = () => `${API_DOMAIN}/search/popular-list`;
 
+const RECOVER_PASSWORD_URL = (email: string) => `${API_DOMAIN}/recover-password/${email}`;
 const CHANGE_PASSWORD_URL = (userId: string) => `${API_DOMAIN}/user/change-password/${userId}`;
 const PATCH_NICKNAME_URL = () => `${API_DOMAIN}/user/nickname`;
 const PATCH_PROFILE_IMAGE_URL = () => `${API_DOMAIN}/user/profile-image`;
@@ -100,6 +101,20 @@ export const postMusicRequest = async (requestBody: PostMusicRequestDto) => {
     const result = await axios.post(POST_MUSIC_URL(), requestBody)
         .then(response => {
             const responseBody: PostMusicResponseDto = response.data;
+            return responseBody;
+        })
+        .catch(error => {
+            if (!error.response) return null;
+            const responseBody: ResponseDto = error.response.data;
+            return responseBody;
+        })
+    return result;
+};
+
+export const recoveryPasswordRequest = async (requestBody: PasswordRecoveryRequestDto) => {
+    const result = await axios.post(POST_MUSIC_URL(), requestBody)
+        .then(response => {
+            const responseBody: PasswordRecoveryResponseDto = response.data;
             return responseBody;
         })
         .catch(error => {

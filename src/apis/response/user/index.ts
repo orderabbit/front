@@ -4,6 +4,7 @@ import PatchNicknameResponseDto from "./patch-nickname.response.dto"
 import PatchProfileImageResponseDto from "./patch-profile-image.response.dto"
 import PatchPasswordResponseDto from "./patch-password.response.dto"
 import WithdrawalUserResponseDto from "./withdrawal-user.response.dto"
+import PasswordRecoveryResponseDto from "./password-recovery.response.dto"
 
 export type {
     GetSignInUserResponseDto,
@@ -11,5 +12,6 @@ export type {
     PatchNicknameResponseDto,
     PatchProfileImageResponseDto,
     PatchPasswordResponseDto,
-    WithdrawalUserResponseDto
+    WithdrawalUserResponseDto,
+    PasswordRecoveryResponseDto
 }

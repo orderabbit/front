@@ -14,47 +14,33 @@ const ChangePasswordForm = ({ accessToken }: { accessToken: string }) => {
     const { userId } = loginUser || {};
 
     const [cookies, setCookie] = useCookies();
-    const [profileImage, setProfileImage] = useState<string | null>(null);
-    const [nickname, setNickname] = useState<string>('');
-    const [email, setEmail] = useState<string>('');
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [error, setError] = useState<null | ResponseMessage | string>(null);
-    const [success, setSuccess] = useState(false);
     const [isPasswordChange, setPasswordChange] = useState<boolean>(false);
-    const [isMyPage, setIsMyPage] = useState<boolean>(false);
 
-    useEffect(() => {
-        if (userId && cookies.accessToken) {
-            getUserRequest(userId, accessToken).then(getUserResponse);
-        }
-    }, [userId, accessToken]);
+    // const getUserResponse = (responseBody: GetUserResponseDto | ResponseDto | null) => {
+    //     if (!responseBody) return;
+    //     const { code } = responseBody;
+    //     if (code === 'NU') {
+    //         alert('존재하지 않는 유저입니다.');
+    //     } else if (code === 'DBE') {
+    //         alert('데이터베이스 오류입니다.');
+    //     } else if (code !== 'SU') {
+    //         navigator(MAIN_PATH());
+    //         return;
+    //     }
 
-    const getUserResponse = (responseBody: GetUserResponseDto | ResponseDto | null) => {
-        if (!responseBody) return;
-        const { code } = responseBody;
-        if (code === 'NU') {
-            alert('존재하지 않는 유저입니다.');
-        } else if (code === 'DBE') {
-            alert('데이터베이스 오류입니다.');
-        } else if (code !== 'SU') {
-            navigator(MAIN_PATH());
-            return;
-        }
-
-        const { userId: responseUserId, nickname, email, profileImage } = responseBody as GetUserResponseDto;
-        setNickname(nickname);
-        setEmail(email);
-        setProfileImage(profileImage);
-        const isMyPage = loginUser?.userId === responseUserId;
-        setIsMyPage(isMyPage);
-    };
+    //     const { userId: responseUserId, nickname, email, profileImage } = responseBody as GetUserResponseDto;
+    //     setNickname(nickname);
+    //     setEmail(email);
+    //     setProfileImage(profileImage);
+    //     const isMyPage = loginUser?.userId === responseUserId;
+    //     setIsMyPage(isMyPage);
+    // };
 
     const patchPasswordResponse = (responseBody: PatchPasswordResponseDto | ResponseDto | null) => {
-        if (!cookies.accessToken) return;
-
-        if (!userId) return;
-        getUserRequest(userId, cookies.accessToken).then(getUserResponse);
+        if (!cookies.accessToken || !userId) return;
 
         if (!responseBody) return;
         const { code } = responseBody;
@@ -71,11 +57,9 @@ const ChangePasswordForm = ({ accessToken }: { accessToken: string }) => {
         } else if (code !== 'SU') {
             return;
         }
-        setSuccess(true);
         setPasswordChange(false);
         alert('비밀번호가 성공적으로 변경되었습니다.');
         navigator(USER_PATH(userId));
-        
     };
 
     const onPasswordChangeButtonClickHandler = () => {
