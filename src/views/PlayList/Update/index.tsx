@@ -10,7 +10,7 @@ import { GetBoardResponseDto } from 'apis/response/board';
 import { ResponseDto } from 'apis/response';
 import { convertUrlsToFile } from 'utils';
 
-export default function Write() {
+export default function Update() {
 
   const titleRef = useRef<HTMLTextAreaElement | null>(null);
   const contentRef = useRef<HTMLTextAreaElement | null>(null);
