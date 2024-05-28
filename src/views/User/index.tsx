@@ -205,7 +205,8 @@ export default function User() {
       if (code !== 'SU') return;
 
       resetLoginUser();
-      setCookie('accessToken', '', { path: MAIN_PATH(), expires: new Date() })
+      setCookie('accessToken', '', { path: '/', expires: new Date() })
+      alert('회원탈퇴가 완료되었습니다.');
       navigator(MAIN_PATH());
     }
 
@@ -231,10 +232,10 @@ export default function User() {
     return (
       <div id='user-bottom-wrapper'>
         <div className='user-bottom-container'>
-          <div className='user-bottom-title'>{isMyPage ? '내 게시물 ' : '게시물 '}<span className='emphasis'>{count}</span></div>
+          <div className='user-bottom-title'>{isMyPage ? '내 게시글 ' : '게시글 '}<span className='emphasis'>{count}</span></div>
           <div className='user-bottom-contents-box'>
             {count === 0 ?
-              <div className='user-bottom-contents-nothing'>{'게시물이 없습니다.'}</div> :
+              <div className='user-bottom-contents-nothing'>{'게시글이 없습니다.'}</div> :
               <div className='user-bottom-contents'>
                 {viewList.map(boardListItem => <BoardItem key={boardListItem.itemNumber} boardListItem={boardListItem} />)}
               </div>
@@ -250,7 +251,7 @@ export default function User() {
                       <div className='user-bottom-side-text'>{'글쓰기'}</div>
                     </> :
                     <>
-                      <div className='user-bottom-side-text'>{'내 게시물로 가기'}</div>
+                      <div className='user-bottom-side-text'>{'내 게시글로 가기'}</div>
                       <div className='icon-box'>
                         <div className='icon arrow-right-icon'></div>
                       </div>

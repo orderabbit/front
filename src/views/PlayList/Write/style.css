@@ -1,28 +1,28 @@
-#board-write-wrapper {
+#board-update-wrapper {
   border-top: 1px solid rgba(0, 0, 0, 0.2);
   display: flex;
   justify-content: center;
   background-color: rgba(0, 0, 0, 0.05);
 }
 
-.board-write-container {
+.board-update-container {
   padding: 100px 24px;
   width: 996px;
   min-height: 1952px;
   background-color: rgba(255, 255, 255, 1);
 }
 
-.board-write-box {
+.board-update-box {
   display: flex;
   flex-direction: column;
   gap: 40px;
 }
 
-.board-write-title-box {
+.board-update-title-box {
   width: 100%;
 }
 
-.board-write-title-textarea {
+.board-update-title-textarea {
   width: 100%;
   border: none;
   outline: none;
@@ -33,13 +33,13 @@
   line-height: 140%;
 }
 
-.board-write-content-box {
+.board-update-content-box {
   width: 100%;
   display: flex;
   gap: 16px;
 }
 
-.board-write-content-textarea {
+.board-update-content-textarea {
   flex: 1;
   border: none;
   outline: none;
@@ -51,7 +51,7 @@
   line-height: 150%;
 }
 
-.board-write-icon-box {
+.board-update-icon-box {
   position: relative;
 }
 
@@ -81,6 +81,7 @@
   flex: 1;
   height: 30px;
   width: 150px;
+  right: 500px;
   padding-left: 5px;
   box-sizing: border-box;
   border: 1px solid #ccc;
@@ -95,19 +96,19 @@
   line-height: 150%;
 }
 
-.board-write-images-box {
+.board-update-images-box {
   width: 100%;
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
 
-.board-write-image-box {
+.board-update-image-box {
   width: 100%;
   position: relative;
 }
 
-.board-write-image {
+.board-update-image {
   width: 100%;
 }
 
@@ -117,18 +118,18 @@
   right: 20px;
 }
 
-.board-write-youtube-box {
+.board-update-youtube-box {
   width: 100%;
   position: relative;
 }
 
-.board-write-youtube-textarea {
+.board-update-youtube-textarea {
   width: 100%;
   padding: 10px;
   box-sizing: border-box;
 }
 
-.board-write-youtube-preview {
+.board-update-youtube-preview {
   max-width: 100%;
   position: relative;
   padding-bottom: 56.25%;
@@ -136,7 +137,7 @@
   overflow: hidden;
 }
 
-.board-write-youtube-preview iframe {
+.board-update-youtube-preview iframe {
   position: absolute;
   width: 100%;
   height: 100%;

@@ -90,15 +90,13 @@ export default function Write() {
     setBoardImageFileList(newBoardImageFileList);
   }
 
-  const onVideoUrlChangeHandler = (index: number, event: ChangeEvent<HTMLInputElement>) => {
+  const onVideoUrlChangeHandler = (event: ChangeEvent<HTMLInputElement>) => {
     const { value } = event.target;
-    const updatedVideoUrls = [...videoUrls];
-    updatedVideoUrls[index] = value;
-    setVideoUrls(updatedVideoUrls);
-    if (videoUrlInputRefs.current[index]) {
-      videoUrlInputRefs.current[index]!.style.height = 'auto';
-      videoUrlInputRefs.current[index]!.style.height = `${videoUrlInputRefs.current[index]!.scrollHeight}px`;
-    }
+    setVideoUrl(value);
+
+    if (!videoUrlInputRef.current) return;
+    videoUrlInputRef.current.style.height = 'auto';
+    videoUrlInputRef.current.style.height = `${videoUrlInputRef.current.scrollHeight}px`;
   };
 
   const extractYouTubeVideoId = (url: string) => {
@@ -147,16 +145,16 @@ export default function Write() {
   }, []);
 
   return (
-    <div id='board-write-wrapper'>
-      <div className='board-write-container'>
-        <div className='board-write-box'>
-          <div className='board-write-title-box'>
-            <textarea ref={titleRef} className='board-write-title-textarea' rows={1} placeholder='제목을 작성해주세요.' value={title} onChange={onTitleChangeHandler} />
+    <div id='board-update-wrapper'>
+      <div className='board-update-container'>
+        <div className='board-update-box'>
+          <div className='board-update-title-box'>
+            <textarea ref={titleRef} className='board-update-title-textarea' rows={1} placeholder='제목을 작성해주세요.' value={title} onChange={onTitleChangeHandler} />
           </div>
           <div className='divider'></div>
-          <div className='board-write-content-box'>
-            <textarea ref={contentRef} className='board-write-content-textarea' placeholder='내용을 작성해주세요.' value={content} onChange={onContentChangeHandler} />
-            <div className='board-write-icon-box'>
+          <div className='board-update-content-box'>
+            <textarea ref={contentRef} className='board-update-content-textarea' placeholder='내용을 작성해주세요.' value={content} onChange={onContentChangeHandler} />
+            <div className='board-update-icon-box'>
               <div className='icon-button' onClick={onImageUploadButtonClickHandler}>
                 <div className='icon image-box-light-icon'></div>
               </div>
@@ -164,54 +162,27 @@ export default function Write() {
               <div className='icon-button' onClick={toggleUrlBox}>
                 <div className='icon url-box-light-icon'></div>
               </div>
-              {showMore && (
-                <div className='icon-button' onClick={addNewUrlInput}>
-                  <fa.FaPlus />
-                </div>
-              )}
             </div>
           </div>
-          {showMore && (
-            <div className='video-url-box-container'>
-              <div className="video-url-box">
-                {videoUrls.map((videoUrl, index) => (
-                  <div key={index} className='input-with-button'>
-                    <input
-                      ref={(el) => (videoUrlInputRefs.current[index] = el)}
-                      type='text'
-                      className='url-input'
-                      placeholder={`Video URL ${index + 1}`}
-                      value={videoUrl}
-                      onChange={(event) => onVideoUrlChangeHandler(index, event)}
-                      onKeyPress={handleKeyPress}
-                    />
-                    <div className='icon-buttons' onClick={() => removeInputField(index)}>
-                      <div className='icon delete-icon'></div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          <div className='board-write-images-box'>
+          {showMore &&
+              <input ref={videoUrlInputRef} type='text' className='url-input' placeholder='URL을 입력하세요.' value={videoUrl} onChange={onVideoUrlChangeHandler} onKeyPress={handleKeyPress} />
+            }
+          <div className='board-update-images-box'>
             {imageUrls.map((imageUrl, index) =>
-              <div className='board-write-image-box' key={index}>
-                <img className='board-write-image' src={imageUrl} />
+              <div className='board-update-image-box' key={index}>
+                <img className='board-update-image' src={imageUrl} />
                 <div className='icon-button image-close' onClick={() => onImageCloseButtonClickHandler(index)}>
                   <div className='icon close-icon'></div>
                 </div>
               </div>
             )}
           </div>
-          {videoUrls.map((videoUrl, index) => (
-            isValidYouTubeUrl(videoUrl) && (
-              <div className='board-write-youtube-preview' key={index}>
-                <iframe width="560" height="315" src={`https://www.youtube.com/embed/${extractYouTubeVideoId(videoUrl)}`} frameBorder="0" allowFullScreen title={`YouTube Video ${index + 1}`}></iframe>
-              </div>
-            )
-          ))}
+          {isValidYouTubeUrl(videoUrl) && (
+            <div className='board-update-youtube-preview'>
+              <iframe width="560" height="315" src={`https://www.youtube.com/embed/${extractYouTubeVideoId(videoUrl)}`} frameBorder="0" allowFullScreen></iframe>
+            </div>
+          )}
         </div>
       </div>
-    </div >
-  );
+    </div>);
 }
