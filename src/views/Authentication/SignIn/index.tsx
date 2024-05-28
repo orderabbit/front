@@ -1,5 +1,5 @@
 
-import { SNS_SIGN_IN_URL, signInRequest } from "apis";
+import { SNS_SIGN_IN_URL, recoveryPasswordRequest, signInRequest } from "apis";
 import { SignInRequestDto } from "apis/request/auth";
 import { SignInResponseDto } from "apis/response/auth";
 import InputBox from "components/InputBox";
@@ -87,6 +87,10 @@ export default function SignIn() {
         onSignInButtonClickHandler();
     };
 
+    const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setEmail(e.target.value);
+    };
+
     const recoverPasswordResponse = (responseBody: ResponseBody<PasswordRecoveryResponseDto>) => {
         if (!responseBody) return;
         const { code } = responseBody;
@@ -95,12 +99,24 @@ export default function SignIn() {
         if (code === ResponseCode.DATABASE_ERROR) alert('데이터베이스 오류입니다.');
     };
 
-    const recoverPassword = async () => {
-        if(!email) return;
+    const recoverPasswordButtonClickHandler = async (email: string) => {
+        if (!email) {
+            alert('이메일을 입력하세요.');
+            return;
+        }
         const requestBody: PasswordRecoveryRequestDto = { email };
-        passwordRecoveryRequest(requestBody).then(recoverPasswordResponse);
+        try {
+            const responseBody = await recoveryPasswordRequest(requestBody);
+            recoverPasswordResponse(responseBody);
+        } catch (error) {
+            console.error('Error during password recovery request:', error);
+            alert('비밀번호 복구 요청 중 오류가 발생했습니다.');
+        }
     };
 
+    const handleRecoverPassword = async () => {
+        await recoverPasswordButtonClickHandler(email);
+    };
 
     return (
         <div id='sign-in-wrapper'>
@@ -129,20 +145,11 @@ export default function SignIn() {
                     </div>
                     <div>
                         <h2>User Component</h2>
-                        <input
-                            type="email"
-                            placeholder="Enter your email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                        />
-                        <button onClick={recoverPassword}>Recover Password</button>
+                        <input type="email" value={email} onChange={handleEmailChange} placeholder="Enter your email" />
+                        <button onClick={handleRecoverPassword}>Recover Password</button>
                     </div>
                 </div>
             </div>
         </div>
     )
-}
-
-function passwordRecoveryRequest(requestBody: PasswordRecoveryRequestDto) {
-    throw new Error("Function not implemented.");
 }

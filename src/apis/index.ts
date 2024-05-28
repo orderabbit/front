@@ -11,6 +11,7 @@ import { GetPopularListResponseDto, GetRelationListResponseDto } from "./respons
 import { PasswordRecoveryRequestDto, PatchNicknameRequestDto, PatchPasswordRequestDto, PatchProfileImageRequestDto } from "./request/user";
 import { PostMusicRequestDto } from "./request/music";
 import { DeleteMusicResponseDto, GetMusicResponseDto, PostMusicResponseDto } from "./response/music";
+import { ResponseBody } from "types";
 
 const responseHandler = <T>(response: AxiosResponse<any, any>) => {
     const responseBody: T = response.data;
@@ -46,7 +47,7 @@ const GET_TOP_3_BOARD_LIST_URL = () => `${API_DOMAIN}/board/top-3`;
 const GET_LATEST_BOARD_LIST_URL = () => `${API_DOMAIN}/board/latest-list`;
 const GET_POPULAR_LIST_URL = () => `${API_DOMAIN}/search/popular-list`;
 
-const RECOVER_PASSWORD_URL = (email: string) => `${API_DOMAIN}/recover-password/${email}`;
+const RECOVER_PASSWORD_URL = () => `${API_DOMAIN}/user/recover-password`;
 const CHANGE_PASSWORD_URL = (userId: string) => `${API_DOMAIN}/user/change-password/${userId}`;
 const PATCH_NICKNAME_URL = () => `${API_DOMAIN}/user/nickname`;
 const PATCH_PROFILE_IMAGE_URL = () => `${API_DOMAIN}/user/profile-image`;
@@ -111,18 +112,16 @@ export const postMusicRequest = async (requestBody: PostMusicRequestDto) => {
     return result;
 };
 
-export const recoveryPasswordRequest = async (requestBody: PasswordRecoveryRequestDto) => {
-    const result = await axios.post(POST_MUSIC_URL(), requestBody)
-        .then(response => {
-            const responseBody: PasswordRecoveryResponseDto = response.data;
-            return responseBody;
-        })
-        .catch(error => {
-            if (!error.response) return null;
-            const responseBody: ResponseDto = error.response.data;
-            return responseBody;
-        })
-    return result;
+export const recoveryPasswordRequest = async (requestBody: PasswordRecoveryRequestDto): Promise<ResponseBody<PasswordRecoveryResponseDto>> => {
+    try {
+        const response = await axios.post(RECOVER_PASSWORD_URL(), requestBody);
+        return response.data;
+    } catch (error) {
+        if (axios.isAxiosError(error) && error.response) {
+            return error.response.data;
+        }
+        throw error;
+    }
 };
 
 export const getBoardRequest = async (itemNumber: number | string) => {
