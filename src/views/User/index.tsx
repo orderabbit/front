@@ -6,7 +6,7 @@ import { BoardListItem } from 'types/interface';
 import BoardItem from 'components/BoardItem';
 import { BOARD_PATH, MAIN_PATH, USER_PATH, WRITE_PATH } from 'constant';
 import { useLoginUserStore } from 'stores';
-import { changePasswordRequest, fileUploadRequest, getUserBoardListRequest, getUserRequest, patchNicknameRequest, patchProfileImageRequest } from 'apis';
+import { changePasswordRequest, fileUploadRequest, getUserBoardListRequest, getUserRequest, patchNicknameRequest, patchProfileImageRequest, withdrawUserRequest } from 'apis';
 import { GetUserBoardListResponseDto } from 'apis/response/board';
 import { ResponseDto } from 'apis/response';
 import { GetUserResponseDto, PatchNicknameResponseDto, PatchProfileImageResponseDto } from 'apis/response/user';
@@ -177,6 +177,7 @@ export default function User() {
       totalSection,
       setTotalList } = usePagination<BoardListItem>(5);
 
+    const { loginUser, setLoginUser, resetLoginUser } = useLoginUserStore();
     const [count, setCount] = useState<number>(0);
 
     const getUserBoardListResponse = (responseBody: GetUserBoardListResponseDto | ResponseDto | null) => {
@@ -193,6 +194,28 @@ export default function User() {
       const { userBoardList } = responseBody as GetUserBoardListResponseDto;
       setTotalList(userBoardList);
       setCount(userBoardList.length);
+    }
+
+    const withDrawUserResponse = (responseBody: ResponseDto | null) => {
+      if (!responseBody) return;
+      const { code } = responseBody;
+      if (code === 'AF') alert('인증에 실패했습니다.');
+      if (code === 'NU') alert('존재하지 않는 유저입니다.');
+      if (code === 'DBE') alert('데이터베이스 오류입니다.');
+      if (code !== 'SU') return;
+
+      resetLoginUser();
+      setCookie('accessToken', '', { path: MAIN_PATH(), expires: new Date() })
+      navigator(MAIN_PATH());
+    }
+
+    const withDrawalUserButtonClickHandler = () => {
+      alert('정말 탈퇴하시겠습니까?');
+      if (!cookies.accessToken) return;
+      if (!loginUser) return;
+      const { userId } = loginUser;
+
+      withdrawUserRequest(userId, cookies.accessToken).then(withDrawUserResponse);
     }
 
     const onSideCardClickHandler = () => {
@@ -231,9 +254,13 @@ export default function User() {
                       <div className='icon-box'>
                         <div className='icon arrow-right-icon'></div>
                       </div>
+
                     </>
                   }
                 </div>
+              </div>
+              <div className='withDrawal-user-box'>
+                <div className='withDrawal-user' onClick={withDrawalUserButtonClickHandler}>{'회원탈퇴'}</div>
               </div>
             </div>
           </div>

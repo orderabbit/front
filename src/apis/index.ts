@@ -6,7 +6,7 @@ import { ResponseDto } from "./response";
 import { CheckCertificationResponseDto, EmailCertificationResponseDto, SignInResponseDto, SignUpResponseDto, userIdCheckResponseDto } from "./response/auth";
 import nicknameCheckResponseDto from "./response/auth/nickname-check.response.dto";
 import { DeleteBoardResponseDto, GetBoardResponseDto, GetCommentListResponseDto, GetFavoriteListResponseDto, GetLatestBoardListResponseDto, GetSearchBoardListResponseDto, GetTop3BoardResponseDto, GetUserBoardListResponseDto, IncreaseViewCountResponseDto, PatchBoardResponseDto, PostBoardResponseDto, PostCommentResponseDto, PutFavoriteResponseDto } from "./response/board";
-import { GetSignInUserResponseDto, GetUserResponseDto, PatchNicknameResponseDto, PatchProfileImageResponseDto } from "./response/user";
+import { GetSignInUserResponseDto, GetUserResponseDto, PatchNicknameResponseDto, PatchProfileImageResponseDto, WithdrawalUserResponseDto } from "./response/user";
 import { GetPopularListResponseDto, GetRelationListResponseDto } from "./response/search";
 import { PatchNicknameRequestDto, PatchPasswordRequestDto, PatchProfileImageRequestDto } from "./request/user";
 import { PostMusicRequestDto } from "./request/music";
@@ -51,6 +51,7 @@ const PATCH_NICKNAME_URL = () => `${API_DOMAIN}/user/nickname`;
 const PATCH_PROFILE_IMAGE_URL = () => `${API_DOMAIN}/user/profile-image`;
 const DELETE_MUSIC_URL = (url: string) => `${API_DOMAIN}/music/delete/${url}`;
 const GET_USER_URL = (userId: string) => `${API_DOMAIN}/user/${userId}`
+const WIDTHDRAWAL_USER_URL = (userId: number | string) => `${API_DOMAIN}/user/withdrawal/${userId}`;
 const GET_USER_BOARD_LIST_URL = (userId: string) => `${API_DOMAIN}/board/user-board-list/${userId}`;
 const PATCH_BOARD_URL = (itemNumber: number | string) => `${API_DOMAIN}/board/${itemNumber}`;
 const GET_BOARD_URL = (itemNumber: number | string) => `${API_DOMAIN}/board/detail/${itemNumber}`;
@@ -389,6 +390,20 @@ export const deleteBoardRequest = async (itemNumber: number | string, accessToke
     const result = await axios.delete(DELETE_BOARD_URL(itemNumber), authorization(accessToken))
         .then(response => {
             const responseBody: DeleteBoardResponseDto = response.data;
+            return responseBody;
+        })
+        .catch(error => {
+            if (!error.response) return null;
+            const responseBody: ResponseDto = error.data;
+            return responseBody;
+        });
+    return result;
+};
+
+export const withdrawUserRequest = async (userId: number | string, accessToken: string) => {
+    const result = await axios.delete(WIDTHDRAWAL_USER_URL(userId), authorization(accessToken))
+        .then(response => {
+            const responseBody: WithdrawalUserResponseDto = response.data;
             return responseBody;
         })
         .catch(error => {
