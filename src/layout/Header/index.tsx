@@ -178,7 +178,6 @@ export default function Header() {
         const requestBody: PostBoardRequestDto = {
           title, content, videoUrl, boardImageList
         }
-        console.log(requestBody);
         postBoardRequest(requestBody, accessToken).then(postBoardResponse);
       } else {
         console.log(itemNumber);
