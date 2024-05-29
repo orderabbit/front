@@ -221,6 +221,7 @@ export default function User() {
 
     const withDrawalUserButtonClickHandler = () => {
       alert('정말 탈퇴하시겠습니까?');
+      navigator(MAIN_PATH());
       if (!cookies.accessToken) return;
       if (!loginUser) return;
       const { userId } = loginUser;

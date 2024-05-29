@@ -18,7 +18,7 @@ export default function OAuth() {
 
         setCookie('accessToken', token, { expires, path: '/' });
         navigate('/');
-        alert('로그인 되었습니다.');
+        
 
     }, [token, expirationTime, setCookie, navigate]);
 
