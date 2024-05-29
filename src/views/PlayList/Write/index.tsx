@@ -145,16 +145,16 @@ export default function Write() {
   }, []);
 
   return (
-    <div id='board-update-wrapper'>
-      <div className='board-update-container'>
-        <div className='board-update-box'>
-          <div className='board-update-title-box'>
-            <textarea ref={titleRef} className='board-update-title-textarea' rows={1} placeholder='제목을 작성해주세요.' value={title} onChange={onTitleChangeHandler} />
+    <div id='board-write-wrapper'>
+      <div className='board-write-container'>
+        <div className='board-write-box'>
+          <div className='board-write-title-box'>
+            <textarea ref={titleRef} className='board-write-title-textarea' rows={1} placeholder='제목을 작성해주세요.' value={title} onChange={onTitleChangeHandler} />
           </div>
           <div className='divider'></div>
-          <div className='board-update-content-box'>
-            <textarea ref={contentRef} className='board-update-content-textarea' placeholder='내용을 작성해주세요.' value={content} onChange={onContentChangeHandler} />
-            <div className='board-update-icon-box'>
+          <div className='board-write-content-box'>
+            <textarea ref={contentRef} className='board-write-content-textarea' placeholder='내용을 작성해주세요.' value={content} onChange={onContentChangeHandler} />
+            <div className='board-write-icon-box'>
               <div className='icon-button' onClick={onImageUploadButtonClickHandler}>
                 <div className='icon image-box-light-icon'></div>
               </div>
@@ -165,12 +165,14 @@ export default function Write() {
             </div>
           </div>
           {showMore &&
-            <input ref={videoUrlInputRef} type='text' className='url-input' placeholder='URL을 입력하세요.' value={videoUrl} onChange={onVideoUrlChangeHandler} onKeyPress={handleKeyPress} />
+            <div className='url-input-box'>
+              <input ref={videoUrlInputRef} type='text' className='url-input' placeholder='URL을 입력하세요.' value={videoUrl} onChange={onVideoUrlChangeHandler} onKeyPress={handleKeyPress} />
+            </div>
           }
-          <div className='board-update-images-box'>
+          <div className='board-write-images-box'>
             {imageUrls.map((imageUrl, index) =>
-              <div className='board-update-image-box' key={index}>
-                <img className='board-update-image' src={imageUrl} />
+              <div className='board-write-image-box' key={index}>
+                <img className='board-write-image' src={imageUrl} />
                 <div className='icon-button image-close' onClick={() => onImageCloseButtonClickHandler(index)}>
                   <div className='icon close-icon'></div>
                 </div>
@@ -178,7 +180,7 @@ export default function Write() {
             )}
           </div>
           {isValidYouTubeUrl(videoUrl) && (
-            <div className='board-update-youtube-preview'>
+            <div className='board-write-youtube-preview'>
               <iframe width="560" height="315" src={`https://www.youtube.com/embed/${extractYouTubeVideoId(videoUrl)}`} frameBorder="0" allowFullScreen></iframe>
             </div>
           )}

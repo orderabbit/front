@@ -12,7 +12,6 @@ import './style.css';
 import { MAIN_PATH, SIGNUP_PATH } from "constant";
 import { PasswordRecoveryRequestDto } from "apis/request/user";
 import { PasswordRecoveryResponseDto } from "apis/response/user";
-import { ResponseDto } from "apis/response";
 
 export default function SignIn() {
 
@@ -24,7 +23,7 @@ export default function SignIn() {
     const [userId, setUserId] = useState<string>('');
     const [password, setPassword] = useState<string>('');
     const [passwordType, setPasswordType] = useState<'text' | 'password'>('password');
-
+    const [showRecoveryBox, setShowRecoveryBox] = useState(false);
     const [message, setMessage] = useState<string>('');
 
     const navigate = useNavigate();
@@ -45,6 +44,7 @@ export default function SignIn() {
 
         setCookie('accessToken', token, { expires, path: MAIN_PATH() });
         navigate(MAIN_PATH());
+        alert('로그인 되었습니다.');
     };
 
     const onIdChangeHandler = (event: ChangeEvent<HTMLInputElement>) => {
@@ -94,12 +94,18 @@ export default function SignIn() {
     const recoverPasswordResponse = (responseBody: ResponseBody<PasswordRecoveryResponseDto>) => {
         if (!responseBody) return;
         const { code } = responseBody;
-        if (code === ResponseCode.VALIDATION_FAIL) alert('이메일을 입력하세요.');
-        if (code === ResponseCode.SUCCESS) alert('비밀번호 재설정 메일이 발송되었습니다.');
-        if (code === ResponseCode.DATABASE_ERROR) alert('데이터베이스 오류입니다.');
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailPattern.test(email)) {
+            alert('올바른 이메일 형식이 아닙니다.');
+            return;
+        }
+        if (code === 'VF') alert('이메일을 입력하세요.');
+        if (code === 'DBE') alert('데이터베이스 오류입니다.');
+        if (code === 'SU') alert('비밀번호 재설정 메일이 발송되었습니다.');
+
     };
 
-    const recoverPasswordButtonClickHandler = async (email: string) => {
+    const onRecoverPasswordButtonClickHandler = async (email: string) => {
         if (!email) {
             alert('이메일을 입력하세요.');
             return;
@@ -115,12 +121,20 @@ export default function SignIn() {
     };
 
     const handleRecoverPassword = async () => {
-        await recoverPasswordButtonClickHandler(email);
+        await onRecoverPasswordButtonClickHandler(email);
+    };
+
+    const onRecoverPasswordKeyDownHandler = (event: KeyboardEvent<HTMLInputElement>) => {
+        if (event.key !== 'Enter') return;
+        handleRecoverPassword();
+    }
+
+    const toggleRecoveryBox = () => {
+        setShowRecoveryBox(!showRecoveryBox);
     };
 
     return (
         <div id='sign-in-wrapper'>
-            <div className='sign-in-image'></div>
             <div className='sign-in-container'>
                 <div className='sign-in-box'>
                     <div className='sign-in-title'>{'?'}</div>
@@ -131,6 +145,7 @@ export default function SignIn() {
                             <div className='sign-in-content-button-box'>
                                 <div className='primary-button-lg full-width' onClick={onSignInButtonClickHandler}>{'로그인'}</div>
                                 <div className='text-link-lg full-width' onClick={onSignUpButtonClickHandler}>{'회원가입'}</div>
+                                <div className="text-link-lg-right recovery-password-button" onClick={toggleRecoveryBox}>{'비밀번호 찾기'}</div>
                             </div>
                             <div className='sign-in-content-divider'></div>
                             <div className='sign-in-content-sns-sign-in-box'>
@@ -143,11 +158,12 @@ export default function SignIn() {
                             </div>
                         </div>
                     </div>
-                    <div>
-                        <h2>User Component</h2>
-                        <input type="email" value={email} onChange={handleEmailChange} placeholder="Enter your email" />
-                        <button onClick={handleRecoverPassword}>Recover Password</button>
-                    </div>
+                    {showRecoveryBox && (
+                        <div className="recovery-password-box">
+                            <InputBox title="" type="email" value={email} onChange={handleEmailChange} placeholder="이메일을 입력하세요." />
+                            <div className="primary-button-small recovery-password-button" onClick={handleRecoverPassword}>{'비밀번호 찾기'}</div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

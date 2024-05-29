@@ -6,11 +6,11 @@ import { BoardListItem } from 'types/interface';
 import BoardItem from 'components/BoardItem';
 import { BOARD_PATH, MAIN_PATH, PASSWORD_PATH, USER_PATH, WRITE_PATH } from 'constant';
 import { useLoginUserStore } from 'stores';
-import { fileUploadRequest, getUserBoardListRequest, getUserRequest, patchNicknameRequest, patchPasswordRequest, patchProfileImageRequest, withdrawUserRequest } from 'apis';
+import { fileUploadRequest, getUserBoardListRequest, getUserRequest, patchNicknameRequest, patchProfileImageRequest, withdrawUserRequest } from 'apis';
 import { GetUserBoardListResponseDto } from 'apis/response/board';
 import { ResponseDto } from 'apis/response';
 import { GetUserResponseDto, PatchNicknameResponseDto, PatchProfileImageResponseDto } from 'apis/response/user';
-import { PatchNicknameRequestDto, PatchPasswordRequestDto, PatchProfileImageRequestDto } from 'apis/request/user';
+import { PatchNicknameRequestDto, PatchProfileImageRequestDto } from 'apis/request/user';
 import { useCookies } from 'react-cookie';
 import { usePagination } from 'hooks';
 import Pagination from 'components/Pagination';
@@ -29,12 +29,10 @@ export default function User() {
     const { loginUser, setLoginUser, resetLoginUser } = useLoginUserStore();
     const imageInputRef = useRef<HTMLInputElement | null>(null);
 
-    const [isPasswordChange, setPasswordChange] = useState<boolean>(false);
     const [isNicknameChange, setNicknameChange] = useState<boolean>(false);
     const [nickname, setNickname] = useState<string>('');
     const [email, setEmail] = useState<string>('');
     const [changeNickname, setChangeNickname] = useState<string>('');
-    const [changePassword, setChangePassword] = useState<string>('');
     const [profileImage, setProfileImage] = useState<string | null>(null);
 
     const getUserResponse = (responseBody: GetUserResponseDto | ResponseDto | null) => {
@@ -167,7 +165,9 @@ export default function User() {
               </div>
               <div className='user-top-info-email'>{email}</div>
             </div>
-            <div className='password-change' onClick={onPasswordChangeButtonClickHandler}>{'비밀번호 변경'}</div>
+            <div className='password-change-box'>
+              <div className='password-change' onClick={onPasswordChangeButtonClickHandler}>{'비밀번호 변경'}</div>
+            </div>
           </div>
         </div>
       </div>

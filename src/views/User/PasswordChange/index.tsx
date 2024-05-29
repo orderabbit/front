@@ -7,6 +7,8 @@ import { MAIN_PATH, USER_PATH } from 'constant';
 import { useLoginUserStore } from 'stores';
 import { useNavigate } from 'react-router-dom';
 import { useCookies } from 'react-cookie';
+import InputBox from 'components/InputBox';
+import './style.css';
 
 const ChangePasswordForm = ({ accessToken }: { accessToken: string }) => {
     const { loginUser } = useLoginUserStore();
@@ -58,7 +60,7 @@ const ChangePasswordForm = ({ accessToken }: { accessToken: string }) => {
             return;
         }
         setPasswordChange(false);
-        alert('비밀번호가 성공적으로 변경되었습니다.');
+        alert('비밀번호가 변경되었습니다.');
         navigator(USER_PATH(userId));
     };
 
@@ -67,32 +69,32 @@ const ChangePasswordForm = ({ accessToken }: { accessToken: string }) => {
 
         if (currentPassword && newPassword) {
             const requestBody = { currentPassword, newPassword };
-            patchPasswordRequest(userId, cookies.accessToken, requestBody).then(patchPasswordResponse);
+            patchPasswordRequest(userId, requestBody, cookies.accessToken).then(patchPasswordResponse);
         }
     };
 
     return (
-        <div>
+        <div id='password-change-wrapper'>
             <h2>비밀번호 변경</h2>
-            <div>
-                <label>현재 비밀번호:</label>
-                <input
+            <div className='password-change-input-box'>
+                <InputBox
+                    title='현재 비밀번호'
                     type="password"
                     value={currentPassword}
+                    placeholder='현재 비밀번호를 입력하세요.'
                     onChange={(e) => setCurrentPassword(e.target.value)}
-                    required
                 />
             </div>
-            <div>
-                <label>새로운 비밀번호:</label>
-                <input
+            <div className='password-change-input-box'>
+                <InputBox
+                    title='새로운 비밀번호'
                     type="password"
                     value={newPassword}
+                    placeholder='새로운 비밀번호를 입력하세요.'
                     onChange={(e) => setNewPassword(e.target.value)}
-                    required
                 />
             </div>
-            <button type="button" onClick={onPasswordChangeButtonClickHandler}>비밀번호 변경</button>
+            <button className='password-change-button' type="button" onClick={onPasswordChangeButtonClickHandler}>비밀번호 변경</button>
         </div>
     );
 };

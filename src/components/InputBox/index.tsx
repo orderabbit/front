@@ -3,7 +3,7 @@ import './style.css';
 interface Props{
     title: string,
     placeholder: string;
-    type: 'text' | 'password';
+    type: 'text' | 'password' | 'email';
     value: string;
     isErrorMessage?: boolean;
     buttonTitle?: string;

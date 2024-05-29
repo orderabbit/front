@@ -370,7 +370,6 @@ const Test: React.FC<PlayerProps> = ({ }) => {
         const videoId = nextVideo.id;
         try {
             const videoInfo = await fetchVideoInfo(videoId);
-            console.log('playerRef.current:', playerRef.current);
             if (videoInfo && videoRef.current && playerRef.current) {
                 setCurrentVideoIndex(nextIndex);
                 setDuration(videoInfo.duration);

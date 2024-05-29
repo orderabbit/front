@@ -1,28 +1,28 @@
-#board-update-wrapper {
+#board-write-wrapper {
   border-top: 1px solid rgba(0, 0, 0, 0.2);
   display: flex;
   justify-content: center;
   background-color: rgba(0, 0, 0, 0.05);
 }
 
-.board-update-container {
+.board-write-container {
   padding: 100px 24px;
   width: 996px;
   min-height: 1952px;
   background-color: rgba(255, 255, 255, 1);
 }
 
-.board-update-box {
+.board-write-box {
   display: flex;
   flex-direction: column;
   gap: 40px;
 }
 
-.board-update-title-box {
+.board-write-title-box {
   width: 100%;
 }
 
-.board-update-title-textarea {
+.board-write-title-textarea {
   width: 100%;
   border: none;
   outline: none;
@@ -33,13 +33,13 @@
   line-height: 140%;
 }
 
-.board-update-content-box {
+.board-write-content-box {
   width: 100%;
   display: flex;
   gap: 16px;
 }
 
-.board-update-content-textarea {
+.board-write-content-textarea {
   flex: 1;
   border: none;
   outline: none;
@@ -51,28 +51,19 @@
   line-height: 150%;
 }
 
-.board-update-icon-box {
+.board-write-icon-box {
   position: relative;
-}
-
-.video-url-box-container {
-  position: relative;
-  top: -30px;
-  display: flex;
-  justify-content: end;
-  gap: 10px;
-  margin-top: 0px;
-}
-
-.video-url-box {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  justify-content: end;
 }
 
 .input-with-button {
   display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.url-input-box {
+  display: flex;
+  padding-left: 800px;
   align-items: center;
   gap: 10px;
 }
@@ -83,7 +74,6 @@
   width: 150px;
   right: 500px;
   padding-left: 5px;
-  box-sizing: border-box;
   border: 1px solid #ccc;
   box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
   outline: none;
@@ -96,19 +86,19 @@
   line-height: 150%;
 }
 
-.board-update-images-box {
+.board-write-images-box {
   width: 100%;
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
 
-.board-update-image-box {
+.board-write-image-box {
   width: 100%;
   position: relative;
 }
 
-.board-update-image {
+.board-write-image {
   width: 100%;
 }
 
@@ -118,18 +108,18 @@
   right: 20px;
 }
 
-.board-update-youtube-box {
+.board-write-youtube-box {
   width: 100%;
   position: relative;
 }
 
-.board-update-youtube-textarea {
+.board-write-youtube-textarea {
   width: 100%;
   padding: 10px;
   box-sizing: border-box;
 }
 
-.board-update-youtube-preview {
+.board-write-youtube-preview {
   max-width: 100%;
   position: relative;
   padding-bottom: 56.25%;
@@ -137,7 +127,7 @@
   overflow: hidden;
 }
 
-.board-update-youtube-preview iframe {
+.board-write-youtube-preview iframe {
   position: absolute;
   width: 100%;
   height: 100%;

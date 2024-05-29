@@ -3,19 +3,12 @@
     min-width: 1440px;
     height: 90vh;
     
-
     display: flex;
-}
-
-.sign-in-image{
-    width: 830px;
-    background-position: 50% 50%;
-    background-size: 100% 100%;
-    /*background-image: url(views/Authentication/SignIn/assets/sign-in-image.png);*/
+    justify-content: center;
 }
 
 .sign-in-container{
-    flex: 1;
+    flex-direction: column;
     display: flex;
     justify-content: center;
     align-items: center;

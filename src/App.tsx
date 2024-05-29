@@ -23,23 +23,23 @@ import ChangePasswordForm from 'views/User/PasswordChange';
 import './App.css';
 
 function App() {
-  const {setLoginUser, resetLoginUser} = useLoginUserStore();
+  const { setLoginUser, resetLoginUser } = useLoginUserStore();
   const [cookies, setCookies] = useCookies();
 
   const getSignInUserResponse = (responseBody: GetSignInUserResponseDto | ResponseDto | null) => {
-    if(!responseBody) return;
-    const {code} = responseBody;
+    if (!responseBody) return;
+    const { code } = responseBody;
 
-    if(code === 'AF' || code === 'NU' || code === 'DBE'){
+    if (code === 'AF' || code === 'NU' || code === 'DBE') {
       resetLoginUser();
       return;
     }
-    const loginUser: User = { ...responseBody as GetSignInUserResponseDto};
+    const loginUser: User = { ...responseBody as GetSignInUserResponseDto };
     setLoginUser(loginUser);
   }
 
   useEffect(() => {
-    if(!cookies.accessToken) {
+    if (!cookies.accessToken) {
       resetLoginUser();
       return;
     }
@@ -49,11 +49,11 @@ function App() {
   return (
     <Routes>
       <Route element={<Container />}>
+        <Route path='auth/oauth-response/:token/:expirationTime' element={<OAuth />} />
         <Route path={PASSWORD_PATH()} element={<ChangePasswordForm accessToken={''} />} />
         <Route path={MAIN_PATH()} element={<Main />} />
         <Route path={SIGNIN_PATH()} element={<SignIn />} />
         <Route path={SIGNUP_PATH()} element={<SignUp />} />
-        <Route path='auth/oauth-response/:token/:expirationTime' element={<OAuth/>} />
         <Route path={SEARCH_PATH(':searchWord')} element={<Search />} />
         <Route path={USER_PATH(':userId')} element={<UserP />} />
         <Route path={BOARD_PATH()}>

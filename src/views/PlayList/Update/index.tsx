@@ -174,41 +174,42 @@ export default function Update() {
       <div className='board-update-container'>
         <div className='board-update-box'>
           <div className='board-update-title-box'>
-            <textarea ref={titleRef} className='board-update-title-textarea' rows={1} placeholder='제목을 작성해주세요.' value={title} onChange={onTitleChangeHandler}/>
+            <textarea ref={titleRef} className='board-update-title-textarea' rows={1} placeholder='제목을 작성해주세요.' value={title} onChange={onTitleChangeHandler} />
           </div>
           <div className='divider'></div>
           <div className='board-update-content-box'>
-            <textarea ref={contentRef} className='board-update-content-textarea' placeholder='내용을 작성해주세요.' value={content} onChange={onContentChangeHandler}/>
+            <textarea ref={contentRef} className='board-update-content-textarea' placeholder='내용을 작성해주세요.' value={content} onChange={onContentChangeHandler} />
             <div className='board-update-icon-box'>
               <div className='icon-button' onClick={onImageUploadButtonClickHandler}>
                 <div className='icon image-box-light-icon'></div>
               </div>
-              <input ref={imageInputRef} type='file' accept='image/*' style={{display: 'none'}} onChange={onImageChangeHandler}/>
+              <input ref={imageInputRef} type='file' accept='image/*' style={{ display: 'none' }} onChange={onImageChangeHandler} />
               <div className='icon-button' onClick={toggleUrlBox}>
                 <div className='icon url-box-light-icon'></div>
               </div>
-              {showMore &&
-              <input ref={videoUrlInputRef} type='text' className='url-input' placeholder='URL을 입력하세요.' value={videoUrl} onChange={onVideoUrlChangeHandler} onKeyPress={handleKeyPress}/>
-              }
             </div>
           </div>
+          {showMore &&
+            <div className='url-input-box'>
+              <input ref={videoUrlInputRef} type='text' className='url-input' placeholder='URL을 입력하세요.' value={videoUrl} onChange={onVideoUrlChangeHandler} onKeyPress={handleKeyPress} />
+            </div>
+          }
           <div className='board-update-images-box'>
             {imageUrls.map((imageUrl, index) =>
-            <div className='board-update-image-box' key={index}>
-              <img className='board-update-image' src={imageUrl}/>
-              <div className='icon-button image-close' onClick={() => onImageCloseButtonClickHandler(index)}>
-                <div className='icon close-icon'></div>
+              <div className='board-update-image-box' key={index}>
+                <img className='board-update-image' src={imageUrl} />
+                <div className='icon-button image-close' onClick={() => onImageCloseButtonClickHandler(index)}>
+                  <div className='icon close-icon'></div>
+                </div>
               </div>
+            )}
+          </div>
+          {isValidYouTubeUrl(videoUrl) && (
+            <div className='board-update-youtube-preview'>
+              <iframe width="560" height="315" src={`https://www.youtube.com/embed/${extractYouTubeVideoId(videoUrl)}`} frameBorder="0" allowFullScreen></iframe>
             </div>
-            )}
-          </div>
-            {isValidYouTubeUrl(videoUrl) && (
-              <div className='board-update-youtube-preview'>
-                <iframe width="560" height="315" src={`https://www.youtube.com/embed/${extractYouTubeVideoId(videoUrl)}`} frameBorder="0" allowFullScreen></iframe>
-              </div>
-            )}
-          </div>
+          )}
         </div>
       </div>
-  )
+    </div>);
 }

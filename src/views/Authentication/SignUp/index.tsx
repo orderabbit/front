@@ -129,8 +129,8 @@ const signUpResponse = (responseBody: ResponseBody<SignUpResponseDto>) => {
         const {code} = responseBody;
         if(code === ResponseCode.VALIDATION_FAIL) alert('모든 값을 입력하세요.');
 
-        alert('회원가입이 완료되었습니다.');
         navigate(SIGNIN_PATH());
+        alert('회원가입이 완료되었습니다.');
     };
 
     const onIdChangeHandler = (event: ChangeEvent<HTMLInputElement>) => {
