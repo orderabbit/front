@@ -180,7 +180,6 @@ export default function Header() {
         }
         postBoardRequest(requestBody, accessToken).then(postBoardResponse);
       } else {
-        console.log(itemNumber);
         if (!itemNumber) {
           alert('존재하지 않는 번호입니다.');
         } else {

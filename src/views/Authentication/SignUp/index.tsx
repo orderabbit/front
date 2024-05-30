@@ -249,7 +249,6 @@ export default function SignUp() {
         }
 
         const requestBody: SignUpRequestDto = { userId, nickname, password, email, certificationNumber, agreedPersonal };
-        console.log(requestBody);
         signupRequest(requestBody).then(signUpResponse)
     };
 

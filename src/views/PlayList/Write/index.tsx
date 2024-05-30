@@ -12,7 +12,6 @@ export default function Write() {
   const titleRef = useRef<HTMLTextAreaElement | null>(null);
   const contentRef = useRef<HTMLTextAreaElement | null>(null);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
-  const youtubeRef = useRef<HTMLTextAreaElement | null>(null);
   const videoUrlInputRef = useRef<HTMLInputElement | null>(null);
 
   const { title, setTitle } = useBoardStore();

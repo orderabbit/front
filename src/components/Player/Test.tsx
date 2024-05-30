@@ -652,8 +652,6 @@ const Test: React.FC<PlayerProps> = ({ }) => {
             const titleWidth = playlist[currentVideoIndex].title.length * 10;
             const containerWidth = containerRef.current.offsetWidth;
 
-            console.log('titleWidth:', titleWidth);
-            console.log('containerWidth:', containerWidth);
             if (titleWidth > containerWidth) {
                 titleRef.current.classList.add('animate-title');
             } else {

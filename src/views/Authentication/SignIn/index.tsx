@@ -17,13 +17,16 @@ export default function SignIn() {
 
     const userIdRef = useRef<HTMLInputElement | null>(null);
     const passwordRef = useRef<HTMLInputElement | null>(null);
+    const emailRef = useRef<HTMLInputElement | null>(null);
 
+    const [isEmailError, setIsEmailError] = useState<boolean>(false);
     const [cookie, setCookie] = useCookies();
     const [email, setEmail] = useState<string>('');
     const [userId, setUserId] = useState<string>('');
     const [password, setPassword] = useState<string>('');
     const [passwordType, setPasswordType] = useState<'text' | 'password'>('password');
     const [showRecoveryBox, setShowRecoveryBox] = useState(false);
+    const [EmailMessage, setEmailMessage] = useState<string>('');
     const [message, setMessage] = useState<string>('');
 
     const navigate = useNavigate();
@@ -93,6 +96,7 @@ export default function SignIn() {
 
     const recoverPasswordResponse = (responseBody: ResponseBody<PasswordRecoveryResponseDto>) => {
         if (!responseBody) return;
+
         const { code } = responseBody;
         const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailPattern.test(email)) {
@@ -101,23 +105,27 @@ export default function SignIn() {
         }
         if (code === 'VF') alert('이메일을 입력하세요.');
         if (code === 'DBE') alert('데이터베이스 오류입니다.');
-        if (code === 'SU') alert('비밀번호 재설정 메일이 발송되었습니다.');
-
+        if (code === 'NU'){
+            setIsEmailError(true);
+            setEmailMessage('가입되지 않은 이메일입니다.');
+        }
+        if (code === 'SU'){
+            setIsEmailError(false);
+            setEmailMessage('이메일 전송 완료');
+        }
     };
 
     const onRecoverPasswordButtonClickHandler = async (email: string) => {
         if (!email) {
-            alert('이메일을 입력하세요.');
+            setIsEmailError(true);
+            setEmailMessage('이메일을 입력하세요.');
             return;
         }
         const requestBody: PasswordRecoveryRequestDto = { email };
-        try {
-            const responseBody = await recoveryPasswordRequest(requestBody);
-            recoverPasswordResponse(responseBody);
-        } catch (error) {
-            console.error('Error during password recovery request:', error);
-            alert('비밀번호 복구 요청 중 오류가 발생했습니다.');
-        }
+        recoveryPasswordRequest(requestBody).then(recoverPasswordResponse);
+
+        setIsEmailError(false);
+        setEmailMessage('이메일 전송중...');
     };
 
     const handleRecoverPassword = async () => {
@@ -160,7 +168,7 @@ export default function SignIn() {
                     </div>
                     {showRecoveryBox && (
                         <div className="recovery-password-box">
-                            <InputBox title="" type="email" value={email} onChange={handleEmailChange} placeholder="이메일을 입력하세요." />
+                            <InputBox ref={emailRef} title="" placeholder="이메일을 입력하세요." type="email" value={email} onChange={handleEmailChange} isErrorMessage={isEmailError} message={EmailMessage} onKeyDown={onRecoverPasswordKeyDownHandler} />
                             <div className="primary-button-small recovery-password-button" onClick={handleRecoverPassword}>{'비밀번호 찾기'}</div>
                         </div>
                     )}
