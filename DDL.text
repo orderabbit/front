@@ -1,0 +1,123 @@
+-- Active: 1717027484395@@127.0.0.1@3306@project
+CREATE TABLE board_list (
+    item_number INT NOT NULL AUTO_INCREMENT COMMENT '리스트 번호',
+    title TEXT NOT NULL COMMENT '제목',
+    content TEXT NOT NULL COMMENT '내용',
+    video_url TEXT NULL COMMENT '동영상 URL',
+    write_datetime DATETIME NOT NULL COMMENT '추가 날짜',
+    favorite_count INT NOT NULL DEFAULT 0 COMMENT '좋아요 수',
+    comment_count INT NOT NULL DEFAULT 0 COMMENT '댓글 수',
+    view_count INT NOT NULL DEFAULT 0 COMMENT '조회 수',
+    writer_id VARCHAR(50) NOT NULL COMMENT '사용자 아이디',
+    PRIMARY KEY (item_number)
+) COMMENT '리스트 테이블';
+
+CREATE TABLE certification_number (
+    user_id VARCHAR(50) NOT NULL COMMENT '사용자 아이디',
+    certification_number VARCHAR(30) NOT NULL COMMENT '인증번호'
+) COMMENT '인증번호 테이블';
+
+CREATE TABLE comment (
+    comment_number INT NOT NULL AUTO_INCREMENT COMMENT '댓글 번호',
+    content TEXT NOT NULL COMMENT '댓글 내용',
+    write_datetime DATETIME NOT NULL COMMENT '작성 날짜',
+    item_number INT NOT NULL COMMENT '리스트 번호',
+    user_id VARCHAR(50) NOT NULL COMMENT '사용자 아이디',
+    PRIMARY KEY (comment_number)
+) COMMENT '댓글 테이블';
+
+CREATE TABLE favorite (
+    item_number INT NOT NULL COMMENT '리스트 번호',
+    user_id VARCHAR(50) NOT NULL COMMENT '사용자 아이디'
+) COMMENT '좋아요 테이블';
+
+CREATE TABLE image (
+    item_number INT NOT NULL COMMENT '리스트 번호',
+    image TEXT NOT NULL COMMENT '사진URL',
+    sequence INT NOT NULL AUTO_INCREMENT COMMENT '시퀀스',
+    user_id VARCHAR(50) NOT NULL COMMENT '사용자 아이디',
+    PRIMARY KEY (sequence)
+) COMMENT '리스트 이미지 테이블';
+
+CREATE TABLE music_list (
+    id INT NOT NULL AUTO_INCREMENT COMMENT '아이디',
+    video_url TEXT NOT NULL COMMENT '비디오URL',
+    create_datetime DATETIME NOT NULL COMMENT '생성 날짜',
+    PRIMARY KEY (id)
+) COMMENT '음악 리스트';
+
+CREATE TABLE search_log (
+    sequence INT NOT NULL COMMENT '시퀀스',
+    search_word TEXT NOT NULL COMMENT '검색어',
+    relation_word TEXT NULL COMMENT '관련 검색어',
+    relation BOOLEAN NOT NULL COMMENT '관련 검색어 여부',
+    PRIMARY KEY (sequence)
+) COMMENT '검색 기록 테이블';
+
+CREATE TABLE user (
+    user_id VARCHAR(50) NOT NULL COMMENT '사용자 아이디',
+    password VARCHAR(255) NOT NULL COMMENT '사용자 비밀번호',
+    nickname VARCHAR(20) NOT NULL COMMENT '사용자 닉네임',
+    email VARCHAR(255) NOT NULL COMMENT '사용자 이메일',
+    profile_image TEXT NULL COMMENT '사용자 프로필 사진 URL',
+    PRIMARY KEY (user_id)
+) COMMENT '사용자 테이블';
+
+ALTER TABLE image
+ADD CONSTRAINT FK_board_list_TO_image FOREIGN KEY (item_number) REFERENCES board_list (item_number);
+
+ALTER TABLE board_list
+ADD CONSTRAINT FK_user_TO_board_list FOREIGN KEY (writer_id) REFERENCES user (user_id);
+
+ALTER TABLE favorite
+ADD CONSTRAINT FK_board_list_TO_favorite FOREIGN KEY (item_number) REFERENCES board_list (item_number);
+
+ALTER TABLE comment
+ADD CONSTRAINT FK_board_list_TO_comment FOREIGN KEY (item_number) REFERENCES board_list (item_number);
+
+ALTER TABLE comment
+ADD CONSTRAINT FK_user_TO_comment FOREIGN KEY (user_id) REFERENCES user (user_id);
+
+ALTER TABLE favorite
+ADD CONSTRAINT FK_user_TO_favorite FOREIGN KEY (user_id) REFERENCES user (user_id);
+
+ALTER TABLE image
+ADD CONSTRAINT FK_user_TO_image FOREIGN KEY (user_id) REFERENCES user (user_id);
+
+CREATE VIEW board_list_view AS
+SELECT
+    B.item_number AS item_number,
+    B.title AS title, 
+    B.content AS content,
+    B.video_url AS video_url,
+    MAX(I.image) AS title_image,
+    B.view_count AS view_count,
+    B.favorite_count AS favorite_count,
+    B.comment_count AS comment_count,
+    B.write_datetime AS write_datetime,
+    U.user_id AS writer_id,
+    U.nickname AS writer_nickname,
+    U.profile_image AS writer_profile_image
+FROM
+    board_list AS B
+    INNER JOIN user AS U ON B.writer_id = U.user_id
+    LEFT JOIN image AS I ON B.item_number = I.item_number
+GROUP BY
+    B.item_number;
+
+DROP USER 'developer' @'localhost';
+
+CREATE USER 'developer' @'localhost' IDENTIFIED BY 'password';
+
+GRANT
+ALTER,
+CREATE,
+DELETE,
+DROP,
+INSERT
+,
+SELECT,
+UPDATE ON project.* TO 'developer' @'localhost';
+
+ALTER TABLE `image`
+ADD COLUMN `sequence` INT PRIMARY KEY AUTO_INCREMENT COMMENT '이미지 번호';
