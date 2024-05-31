@@ -97,8 +97,10 @@ export default function SignUp() {
         const { code } = responseBody;
 
         if (code === ResponseCode.VALIDATION_FAIL) alert('아이디와 이메일을 모두 입력하세요.');
-        if (code === ResponseCode.MAIL_FAIL) alert('이메일 전송에 실패했습니다.');
-        if (code === ResponseCode.DATABASE_ERROR) alert('데이터베이스 오류입니다.');
+        if (code === ResponseCode.MAIL_FAIL || code === ResponseCode.DATABASE_ERROR) {
+            setEmailError(true);
+            setEmailMessage('이메일 전송에 실패했습니다.');
+        }
         if (code === ResponseCode.DUPLICATE_EMAIL) 
             setEmailError(true);
             setEmailMessage('이미 사용중인 이메일 입니다.');
