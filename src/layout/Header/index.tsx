@@ -128,7 +128,6 @@ export default function Header() {
   const UploadButton = () => {
 
     const params = useParams();
-    console.log();
     const itemNumber = Number(params["Number"]);
     const { title, content, videoUrl, boardImageFileList, resetBoard } = useBoardStore();
 
@@ -176,8 +175,9 @@ export default function Header() {
       const isWritePage = pathname === BOARD_PATH() + '/' + WRITE_PATH();
       if (isWritePage) {
         const requestBody: PostBoardRequestDto = {
-          title, content, videoUrl, boardImageList
+          title, content, videoUrl, imageUrls: boardImageList
         }
+        console.log(requestBody);
         postBoardRequest(requestBody, accessToken).then(postBoardResponse);
       } else {
         if (!itemNumber) {
@@ -201,7 +201,7 @@ export default function Header() {
           <div className='icon-box'>
             <div className='icon logo-dark-icon'></div>
           </div>
-          <div className='header-logo'>{'logo'}</div>
+          <div className='header-logo'>{'blog'}</div>
         </div>
         <div className='header-right-box'>
           {(isAuthPage || isMainPage || isSearchPage || isDetailPage) && <SearchButton />}

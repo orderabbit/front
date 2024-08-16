@@ -23,8 +23,6 @@ export default function Write() {
   const [showMore, setShowMore] = useState<boolean>(false);
   const [cookies, setCookies] = useCookies();
   const [imageUrls, setImageUrls] = useState<string[]>([]);
-  const [videoUrls, setVideoUrls] = useState<string[]>(['']);
-  const videoUrlInputRefs = useRef<(HTMLInputElement | null)[]>(Array.from({ length: videoUrls.length }, () => null));
 
   const navigate = useNavigate();
 
@@ -108,32 +106,6 @@ export default function Write() {
     return extractYouTubeVideoId(url) !== null;
   };
 
-  const generateYouTubeEmbedCode = (url: string) => {
-    const videoId = extractYouTubeVideoId(url);
-    if (videoId) {
-      return `<iframe width="560" height="315" src="https://www.youtube.com/embed/${videoId}" frameborder="0" allowfullscreen></iframe>`;
-    }
-    return '';
-  };
-
-  const addNewUrlInput = () => {
-    setVideoUrls((prevUrls) => [...prevUrls, '']);
-    videoUrlInputRefs.current.push(null);
-    setTimeout(() => {
-      const element = document.getElementById("board-write-container");
-      if (element) {
-        element.scrollTop = element.scrollHeight;
-      }
-    }, 0);
-  };
-
-  const removeInputField = (indexToRemove: number) => {
-    if (videoUrls.length === 1) {
-      return;
-    }
-    setVideoUrls((prevUrls) => prevUrls.filter((url, index) => index !== indexToRemove));
-  };
-
   useEffect(() => {
     const accessToken = cookies.accessToken;
     if (!accessToken) {
@@ -142,6 +114,8 @@ export default function Write() {
     }
     resetBoard();
   }, []);
+
+  console.log('imageUrls', imageUrls);
 
   return (
     <div id='board-write-wrapper'>

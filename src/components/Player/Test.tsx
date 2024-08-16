@@ -30,17 +30,16 @@ declare global {
 }
 
 const Test: React.FC<PlayerProps> = ({ }) => {
-    // AIzaSyDcwcdL4YrXLMfeAiAQ5sbjuJ5HTGvrz9Y
-    // AIzaSyBRCweLseGcLizadDsECnpLhBRA2cG8PaM
-    // AIzaSyCUHFTIQuos35KXlJmcEt7ZZw7EmbXdrwA
-    const ApiKey = 'AIzaSyCUHFTIQuos35KXlJmcEt7ZZw7EmbXdrwA';
+    // 'AIzaSyDcwcdL4YrXLMfeAiAQ5sbjuJ5HTGvrz9Y'
+    // 'AIzaSyBRCweLseGcLizadDsECnpLhBRA2cG8PaM'
+    // 'AIzaSyCUHFTIQuos35KXlJmcEt7ZZw7EmbXdrwA'
+    const ApiKey = 'AIzaSyDcwcdL4YrXLMfeAiAQ5sbjuJ5HTGvrz9Y';
     const videoRef = useRef<HTMLIFrameElement | null>(null);
     const playerRef = useRef<YT.Player | null>(null);
     const socketRef = useRef<WebSocket | null>(null);
     const titleRef = useRef<HTMLDivElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
 
-    const [subtitles, setSubtitles] = useState<string[]>([]);
     const [shouldRunEffect, setShouldRunEffect] = useState(true);
     const [isInitialMount, setIsInitialMount] = useState(true);
     const [deletedIndex, setDeletedIndex] = useState<number | null>(null);
@@ -158,7 +157,6 @@ const Test: React.FC<PlayerProps> = ({ }) => {
                     console.log("플레이어 상태: PLAYING");
                     setIsPlaying(true);
                     updateCurrentTime();
-                    fetchSubtitles();
                     break;
                 case YT.PlayerState.ENDED:
                     console.log("플레이어 상태: ENDED");
@@ -615,37 +613,6 @@ const Test: React.FC<PlayerProps> = ({ }) => {
         const intervalId = setInterval(updateCurrentTime, 1000);
         return () => clearInterval(intervalId);
     }, []);
-    // 자막 가져오기
-    const fetchSubtitles = () => {
-        const videoId = playlist[currentVideoIndex].id;
-        const apiUrl = `https://www.googleapis.com/youtube/v3/captions?part=snippet&videoId=${videoId}&key=${ApiKey}`;
-        axios.get(apiUrl)
-            .then(response => {
-                const xmlData = response.data;
-                const subtitles = parseSubtitles(xmlData);
-                setSubtitles(subtitles);
-            })
-            .catch(error => {
-                console.error('Error fetching subtitles:', error);
-            });
-    };
-    // 자막 파싱
-    const parseSubtitles = (xmlData: string) => {
-        const parser = new DOMParser();
-        const xmlDoc = parser.parseFromString(xmlData, "text/xml");
-        const textNodes = xmlDoc.getElementsByTagName("text");
-        const subtitles: string[] = [];
-        for (let i = 0; i < textNodes.length; i++) {
-            const textNode = textNodes[i];
-            const subtitle = textNode.textContent;
-
-            console.log('subtitle:', subtitle);
-            if (subtitle) {
-                subtitles.push(subtitle);
-            }
-        }
-        return subtitles;
-    };
     // 타이틀 애니메이션
     useEffect(() => {
         if (titleRef.current && containerRef.current) {
